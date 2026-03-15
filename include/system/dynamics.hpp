@@ -3,9 +3,11 @@
 #include "../constants.hpp"
 #include "../utils.hpp"
 #include <Eigen/Dense>
+#include <Eigen/Cholesky>
 #include <cmath>
 #include <vector>
 #include <random>
+#include <stdexcept>
 
 namespace uav_ugv_sim {
 
@@ -25,7 +27,11 @@ struct SystemParams {
 class SystemModel {
     private:
         SystemState x_;
+        ObservationState y_;
         StateCov Q_;
+        StateCov Svx_;
+        MeasCov R_;
+        MeasCov Svy_;
         SystemParams params_;
 
         std::mt19937 gen_;
@@ -35,33 +41,26 @@ class SystemModel {
             const double& L;
             const ControlInput& u;
 
-            Dynamics(const double& l, const ControlInput& control_vec) : L(l), u(control_vec) {}
+            Dynamics(const double& l, const ControlInput& control_vec);
 
-            void operator()(const SystemState& x, SystemState& dxdt, double t) const {
-                dxdt(0) = u(0) * std::cos(wrapToPi(x(2)));
-                dxdt(1) = u(0) * std::sin(wrapToPi(x(2)));
-                dxdt(2) = (u(0) / L) * std::tan(u(1));
-                dxdt(3) = u(2) * std::cos(wrapToPi(x(5)));
-                dxdt(4) = u(2) * std::sin(wrapToPi(x(5)));
-                dxdt(5) = u(3);
-            }
-        };
-
-        struct SensorObservations {
-            std::vector<TrajectAndObsHist>& system_history;
-
-            SensorObservations(std::vector<TrajectAndObsHist>& sys_hist) : system_history(sys_hist) {}
-
-            void operator()(const )
+            void operator()(const SystemState& x, SystemState& dxdt, double) const;
         };
 
     public:
-        SystemModel(const SystemState& x0, const StateCov& Q, const SystemParams& params)
-            : x_(x0), Q_(Q), params_(params), gen_(std::random_device{}()) {}
+        SystemModel(
+            const SystemState& x0,
+            const StateCov& Q,
+            const MeasCov& R,
+            const SystemParams& params
+        );
 
         void propagate(double t0, const ControlInput& u, bool add_noise = true);
 
-        const SystemState& getState() const { return x_; }
+        void collectMeasurements();
+
+        const SystemState& getState() const;
+
+        const ObservationState& getSensorMeasurement() const;
 };
 
 }
