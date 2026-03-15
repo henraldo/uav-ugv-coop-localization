@@ -2,12 +2,7 @@
 
 #include "../constants.hpp"
 #include "../utils.hpp"
-#include <Eigen/Dense>
-#include <Eigen/Cholesky>
-#include <cmath>
-#include <vector>
 #include <random>
-#include <stdexcept>
 
 namespace uav_ugv_sim {
 

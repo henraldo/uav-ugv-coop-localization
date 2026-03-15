@@ -1,8 +1,6 @@
 #include "constants.hpp"
 #include "utils.hpp"
 #include "filters/ekf.hpp"
-#include <Eigen/Core>
-#include <Eigen/Dense>
 #include <cmath>
 
 namespace uav_ugv_sim {
