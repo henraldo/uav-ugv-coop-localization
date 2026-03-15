@@ -6,7 +6,7 @@
 namespace uav_ugv_sim {
 
 // simulation timestep/sample-rate size
-const double DT = 0.01;
+const double DT = 0.1;
 constexpr double PI = EIGEN_PI;
 const int TRAJECT_AND_OBS_SIZE = 12; // timestamps + 6 internal states + 5 observed states
 
