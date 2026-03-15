@@ -24,10 +24,10 @@ class EKF {
 
         auto computeJacobianF(const SystemState& x, double dt, const SystemParams& sys_params) const -> StateTransition;
 
-        static auto measurmentModel(const SystemState& x) -> ObservationState;
+        auto measurmentModel(const SystemState& x) const -> ObsSensativity;
 
     public:
-        explicit EKF(const EkfParams& m_params = EkfParams{});
+        EKF(const EkfParams& m_params = EkfParams{});
 
         void predict(SystemState& x_hat, StateCov& P, const SystemParams& sys_params);
 
