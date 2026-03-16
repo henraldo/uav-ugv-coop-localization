@@ -35,6 +35,7 @@ FetchContent_MakeAvailable(Boost)
 add_library(vehicle_lib STATIC
     src/filters/ekf.cpp
     src/system/dynamics.cpp
+    src/data/export_utils.cpp
 )
 
 target_include_directories(vehicle_lib PUBLIC
