@@ -16,60 +16,64 @@ inline double wrapToPi(double angle) {
     return std::fmod(angle + PI, 2 * PI) - PI;
 };
 
-// void exportTrajectoryDataToCSV(
-//     const std::string& filename,
+// void exportSimDataToCSV(
+//     const std::string& dataset_name,
 //     const std::vector<double>& time_history,
-//     const std::vector<SystemState>& state_history,
-//     const std::vector<ObservationState>& sensor_history,
-//     const std::string& output_dir = "output_data"
+//     const std::vector<double>& covar_diagonals,
+//     const FilterType& filter_type
 // ) {
-//     if (time_history.size() != state_history.size() || time_history.size() != sensor_history.size() || time_history.empty()) {
-//         std::cerr << "Error: Empty or mismatched history sizes." << std::endl;
+//     if (time_history.empty() || covar_diagonals.empty()) {
+//         std::cerr << "Error: Empty vector received for time_history or covariance diagonals." << std::endl;
 //         return;
 //     }
 
 //     // Build full path to output directory
+//     std::string output_dir = "simulation_output";
 //     std::filesystem::path current_path = std::filesystem::current_path();
-//     std::filesystem::path output_directory = std::filesystem::path::parent_path(current_path) / output_dir;
-//     std::filesystem::path output_path = output_directory.append(filename);
-//     if (!std::filesystem::exists(output_directory)) {
-//         if (!std::filesystem::create_directories(output_directory)) {
-//             std::cerr << "Error: Could not create directory " << output_directory << std::endl;
+//     std::filesystem::path base_directory = std::filesystem::path::parent_path(current_path);
+//     std::filesystem::path output_path = base_directory / output_dir / dataset_name;
+//     if (!std::filesystem::exists(output_path)) {
+//         if (!std::filesystem::create_directories(output_path)) {
+//             std::cerr << "Error: Could not create directory " << output_path << std::endl;
 //             return;
 //         }
-//         std::cout << "Created output directory: " << output_directory << std::endl;
+//         std::cout << "Created output directory: " << output_path << std::endl;
 //     }
 
-//     std::ofstream csv_file(output_path);
-//     if (!csv_file.is_open()) {
-//         std::cerr << "Error: Could not open " << output_path << " for writing." << std::endl;
+//     std::string filter;
+//     if (filter_type == FilterType::EKF) {
+//         filter = "ekf_";
+//     } else {
+//         filter = "ukf_";
+//     }
+
+//     std::filesystem::path sim_data = output_path.append("simulation_data.csv");
+//     std::filesystem::path covar_data = output_path.append(filter + "covar_diagonals.csv");
+
+//     std::ofstream sim_csv_file(sim_data);
+//     // std::ofstream covar_csv_file(covar_data);
+//     if (!sim_csv_file.is_open()) {
+//         std::cerr << "Error: Could not open " << sim_data << " for writing." << std::endl;
 //         return;
 //     }
 
-//     // Write header
-//     csv_file << "time";
-//     for (int i = 0; i < state_history[0].size(); i++) {
-//         csv_file << ", x_" << i;
+//     // Write headers
+//     for (int i = 0; i < SimDataHeaders.size(); i++) {
+//         sim_csv_file << SimDataHeaders[i] << ", ";
 //     }
-//     for (int j = 0; j < sensor_history[0].size(); j++) {
-//         csv_file << ", y_" << j;
-//     }
-//     csv_file << std::endl;
+//     sim_csv_file << std::endl;
 
 //     // Write data to rows
-//     for (size_t step = 0; step < time_history.size(); step++) {
-//         csv_file << time_history[step];
-//         for (int dimX = 0; dimX < state_history[step].size(); dimX++) {
-//             csv_file << "," << state_history[step](dimX);
-//         }
-//         for (int dimY = 0; dimY < sensor_history[step].size(); dimY++) {
-//             csv_file << "," << sensor_history[step](dimY);
-//         }
-//         csv_file << std::endl;
-//     }
+//     // for (size_t step = 0; step < time_history[0].size(); step++) {
+//     //     sim_csv_file << time_history[step];
+//     //     for (int dimX = 0; dimX < time_history[step].size(); dimX++) {
+//     //         sim_csv_file << "," << state_history[step](dimX);
+//     //     }
+//     //     sim_csv_file << std::endl;
+//     // }
 
-//     csv_file.close();
-//     std::cout << "Exported simulated trajectory and sensor data to " << output_path << std::endl;
+//     sim_csv_file.close();
+//     std::cout << "Exported simulated trajectory and sensor data to " << sim_data << std::endl;
 // };
 
 }

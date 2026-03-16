@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+#include <string>
 #include <Eigen/Core>
 #include <Eigen/Dense>
 
@@ -35,5 +37,32 @@ struct TruthParams {
 
     TruthParams() = default;
 };
+
+std::vector<std::string> SimDataHeaders = {
+    "time", 
+    "x_eg", 
+    "x_en", 
+    "x_ew", 
+    "x_ag", 
+    "x_an", 
+    "x_aw", 
+    "y_0", 
+    "y_1", 
+    "y_2", 
+    "y_3", 
+    "y_4",
+    "xhat_eg", 
+    "xhat_en", 
+    "xhat_ew", 
+    "xhat_ag", 
+    "xhat_an", 
+    "xhat_aw",
+    "ey_0",
+    "ey_1",
+    "ey_2",
+    "ey_3",
+    "ey_4",
+};
+std::vector<std::string> CovarDiagRowLabels = {"R", "P", "Q"};
 
 }
