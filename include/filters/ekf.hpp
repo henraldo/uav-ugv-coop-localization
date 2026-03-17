@@ -1,30 +1,26 @@
 #pragma once
 
 #include "../constants.hpp"
-#include "../system/dynamics.hpp"
 
 namespace uav_ugv_sim {
 
 struct EkfParams {
-    StateCov P0;
-    StateCov Q;
-    StateCov Omega;
-    MeasCov R;
+    StateCov P0 = Eigen::Matrix<double, 6, 1>(5.0, 5.0, 2.0, 20.0, 20.0, 2.0).asDiagonal();
+    StateCov Q = Q_TRUE;
+    MeasCov R = R_TRUE;
+    StateCov Omega = StateCov::Identity() * DT;
+    double qTune = 1.0;
+    double rTune = 1.0;
 
-    EkfParams(
-        const StateCov& p_initial = Eigen::Matrix<double, 6, 1>(5.0, 5.0, 2.0, 20.0, 20.0, 2.0).asDiagonal(),
-        const StateCov& q_tune = Eigen::Matrix<double, 6, 1>(0.001, 0.001, 3.25, 0.01, 0.01, 3.25).asDiagonal(),
-        const MeasCov& r_tune = Eigen::Matrix<double, 5, 1>(0.001, 3.0, 0.01, 2.0, 2.0).asDiagonal()
-    ) noexcept
-        : P0(p_initial), Q(q_tune), R(r_tune) {
-            Omega = StateCov::Identity() * DT;
-        }
+    EkfParams() = default;
+
+    explicit EkfParams(const StateCov& p_initial, const double q_scale, const double r_scale);
 };
 
 class EKF {
     private:
         SystemState xhat_;
-        ObservationState yhat_;
+        ObservationState ey_;
         StateCov P_;
         EkfParams params_;
 
@@ -33,7 +29,7 @@ class EKF {
         auto measurmentModel(const SystemState& xhat) const -> ObsSensativity;
 
     public:
-        EKF(const SystemState& x0, const EkfParams& m_params = EkfParams{});
+        EKF(const SystemState& x0, const EkfParams& m_params);
 
         void propagate(double t0, const ControlInput& u);
 
@@ -43,9 +39,9 @@ class EKF {
 
         const SystemState& getEstimatedState() const;
 
-        const ObservationState& getMeasurementResiduals() const;
+        const ObservationState& getFilterResiduals() const;
 
-        const Eigen::Matrix<double, 6, 1> getCovarDiagonal() const;
+        const SystemState getCovarDiagonal() const;
 };
 
 }

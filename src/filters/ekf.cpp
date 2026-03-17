@@ -7,23 +7,32 @@
 
 namespace uav_ugv_sim {
 
+EkfParams::EkfParams(const StateCov& p_initial, double q_scale, double r_scale)
+    : P0(p_initial), qTune(q_scale), rTune(r_scale) {
+    Q *= qTune;
+    R *= rTune;
+}
+
+
 EKF::EKF(const SystemState& x0, const EkfParams& m_params) : xhat_(x0), params_(m_params) {
     P_ = params_.P0;
 }
 
+// Generates linearized measurement model updates for filter innovation calculation
 auto EKF::measurmentModel(const SystemState& xhat) const -> ObsSensativity {
     ObsSensativity H = ObsSensativity::Zero();
-    H(0,0) = (xhat(4,0) - xhat(1,0)) / (std::pow(xhat(4,0) - xhat(1,0), 2) / std::pow(xhat(3,0) - xhat(0,0), 2) + 1) * std::pow(xhat(3,0) - xhat(0,0), 2);
-    H(0,1) = -1 / (std::pow(xhat(4,0) - xhat(1,0), 2) / std::pow(xhat(3,0) - xhat(0,0), 2) + 1) * std::pow(xhat(3,0) - xhat(0,0), 2);
+
+    H(0,0) = (xhat(4) - xhat(1)) / (std::pow(xhat(4) - xhat(1), 2) / std::pow(xhat(3) - xhat(0), 2) + 1) * std::pow(xhat(3) - xhat(0), 2);
+    H(0,1) = -1 / (std::pow(xhat(4) - xhat(1), 2) / std::pow(xhat(3) - xhat(0), 2) + 1) * std::pow(xhat(3) - xhat(0), 2);
     H(0,2) = -1;
     H(0,3) = -H(0,0);
     H(0,4) = -H(0,1);
-    H(1,0) = (xhat(0,0) - xhat(3,0)) / std::sqrt(std::pow(xhat(0,0) - xhat(3,0), 2) + std::pow(xhat(1,0) - xhat(4,0), 2));
-    H(1,1) = (xhat(1,0) - xhat(4,0)) / std::sqrt(std::pow(xhat(0,0) - xhat(3,0), 2) + std::pow(xhat(1,0) - xhat(4,0), 2));
+    H(1,0) = (xhat(0) - xhat(3)) / std::sqrt(std::pow(xhat(0) - xhat(3), 2) + std::pow(xhat(1) - xhat(4), 2));
+    H(1,1) = (xhat(1) - xhat(4)) / std::sqrt(std::pow(xhat(0) - xhat(3), 2) + std::pow(xhat(1) - xhat(4), 2));
     H(1,3) = -H(1,0);
     H(1,4) = -H(1,1);
-    H(2,0) = -(xhat(1,0) - xhat(4,0)) / (std::pow(xhat(1,0) - xhat(4,0), 2) / std::pow(xhat(0,0) - xhat(3,0), 2) + 1) * std::pow(xhat(0,0) - xhat(3,0), 2);
-    H(2,1) = 1 / (std::pow(xhat(1,0) - xhat(4,0), 2) / std::pow(xhat(0,0) - xhat(3,0), 2) + 1) * std::pow(xhat(0,0) - xhat(3,0), 2);
+    H(2,0) = -(xhat(1) - xhat(4)) / (std::pow(xhat(1) - xhat(4), 2) / std::pow(xhat(0) - xhat(3), 2) + 1) * std::pow(xhat(0) - xhat(3), 2);
+    H(2,1) = 1 / (std::pow(xhat(1) - xhat(4), 2) / std::pow(xhat(0) - xhat(3), 2) + 1) * std::pow(xhat(0) - xhat(3), 2);
     H(2,3) = -H(2,0);
     H(2,4) = -H(2,1);
     H(2,5) = -1;
@@ -33,9 +42,10 @@ auto EKF::measurmentModel(const SystemState& xhat) const -> ObsSensativity {
     return H;
 }
 
+// Generates linearized discrete-time state transition matrix from plant dynamics for estimator
 auto EKF::computeJacobianF(const SystemState& xhat, const ControlInput& u, double dt) const -> StateTransition {
-    // Generates linearized discrete-time state transition matrix from plant dynamics for estimator
     StateTransition A = StateTransition::Zero();
+
     A(0,2) = -u(0) * std::sin(wrapToPi(xhat(2)));
     A(1,2) = u(0) * std::cos(wrapToPi(xhat(2)));
     A(3,5) = -u(2) * std::sin(wrapToPi(xhat(5)));
@@ -60,37 +70,39 @@ void EKF::propagate(double t0, const ControlInput& u) {
     );
 #pragma GCC diagnostic pop
 
-    // ensure UGV and UAV headings are wrapped to [-pi, pi]
-    xhat_(2,0) = wrapToPi(xhat_(2,0));
-    xhat_(5,0) = wrapToPi(xhat_(5,0));
+    // ensure UGV and UAV headings are wrapped to [0, 2pi]
+    // xhat_(2) = wrapTo2Pi(xhat_(2));
+    // xhat_(5) = wrapTo2Pi(xhat_(5));
 }
 
+// Filter state prediction stage
 void EKF::predict(double t0, const ControlInput& u) {
     EKF::propagate(t0, u);
     auto F = EKF::computeJacobianF(xhat_, u, DT);
     P_ = F * P_ * F.transpose() + (params_.Omega * params_.Q * params_.Omega.transpose());
 }
 
+// Filter error measurement and correction stage
 void EKF::correct(const ObservationState& z) {
     auto H = EKF::measurmentModel(xhat_);
-    yhat_ = z - (H * xhat_);
+    ey_ = z - (H * xhat_);
 
-    yhat_(0) = wrapToPi(yhat_(0));
-    yhat_(2) = wrapToPi(yhat_(2));
+    ey_(0) = wrapToPi(ey_(0));
+    ey_(2) = wrapToPi(ey_(2));
 
     auto S = H * P_ * H.transpose() + params_.R;
     auto K = P_ * H.transpose() * S.inverse();
 
-    xhat_ += K * yhat_;
-    xhat_(0) = wrapToPi(xhat_(0));
-    xhat_(2) = wrapToPi(xhat_(2));
+    xhat_ += K * ey_;
+    // xhat_(2) = wrapTo2Pi(xhat_(2));
+    // xhat_(5) = wrapTo2Pi(xhat_(5));
 
     P_ = (StateCov::Identity() - K * H) * P_;
 }
 
 // Getter implementations
 const SystemState& EKF::getEstimatedState() const { return xhat_; }
-const ObservationState& EKF::getMeasurementResiduals() const { return yhat_; }
+const ObservationState& EKF::getFilterResiduals() const { return ey_; }
 const Eigen::Matrix<double, 6, 1> EKF::getCovarDiagonal() const { return P_.diagonal(); }
 
 }
