@@ -52,7 +52,7 @@ void SystemModel::propagate(double t0, const ControlInput& u, bool add_noise) {
     }
 
     // ensure UGV and UAV headings are wrapped to [-pi, pi]
-    x_(2,0) = wrapToPi(x_(3,0));
+    x_(2,0) = wrapToPi(x_(2,0));
     x_(5,0) = wrapToPi(x_(5,0));
 }
 

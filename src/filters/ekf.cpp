@@ -61,7 +61,7 @@ void EKF::propagate(double t0, const ControlInput& u) {
 #pragma GCC diagnostic pop
 
     // ensure UGV and UAV headings are wrapped to [-pi, pi]
-    xhat_(2,0) = wrapToPi(xhat_(3,0));
+    xhat_(2,0) = wrapToPi(xhat_(2,0));
     xhat_(5,0) = wrapToPi(xhat_(5,0));
 }
 
