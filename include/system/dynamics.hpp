@@ -7,16 +7,13 @@
 namespace uav_ugv_sim {
 
 struct SystemParams {
-    double L;
-    SystemState x0;
-    ControlInput u0;
+    double L = UGV_L;
+    SystemState x0 = SystemState(10.0, 0.0, PI / 2.0, -60.0, 0.0, -PI / 2.0);
+    ControlInput u0 = ControlInput(2.0, -PI / 18, 12.0, PI / 25.0);
 
-    SystemParams(
-        const double l = UGV_L,
-        const SystemState& x_initial = SystemState(10.0, 0.0, PI / 2.0, -60.0, 0.0, -PI / 2.0),
-        const ControlInput& u_initial = ControlInput(2.0, -PI / 18, 12.0, PI / 25.0)
-    ) noexcept
-        : L(l), x0(x_initial), u0(u_initial) {}
+    SystemParams() = default;
+
+    explicit SystemParams(const double l, const SystemState& x_initial, const ControlInput& u_initial);
 };
 
 class SystemModel {

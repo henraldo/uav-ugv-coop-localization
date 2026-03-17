@@ -9,6 +9,12 @@
 
 namespace uav_ugv_sim {
 
+SystemParams::SystemParams(
+    const double l,
+    const SystemState& x_initial,
+    const ControlInput& u_initial
+) : L(l), x0(x_initial), u0(u_initial) {}
+
 // Constructor Implementation for SystemModel
 SystemModel::SystemModel(const SystemState& x0, const StateCov& Q, const MeasCov& R, const SystemParams& params)
     : x_(x0), Q_(Q), R_(R), params_(params), gen_(std::random_device{}()) {
@@ -51,17 +57,17 @@ void SystemModel::propagate(double t0, const ControlInput& u, bool add_noise) {
         x_ += Svx_ * noise;
     }
 
-    // ensure UGV and UAV headings are wrapped to [-pi, pi]
-    x_(2,0) = wrapToPi(x_(2,0));
-    x_(5,0) = wrapToPi(x_(5,0));
+    // ensure UGV and UAV headings are wrapped to [0, 2pi]
+    // x_(2) = wrapTo2Pi(x_(2));
+    // x_(5) = wrapTo2Pi(x_(5));
 }
 
 void SystemModel::collectMeasurements() {
-    y_(0,0) = wrapToPi(std::atan2(x_(4,0) - x_(1,0), x_(3,0) - x_(0,0)) - x_(2,0));
-    y_(1,0) = std::sqrt(std::pow(x_(0,0) - x_(3,0), 2) + std::pow(x_(1,0) - x_(4,0), 2));
-    y_(2,0) = wrapToPi(std::atan2(x_(1,0) - x_(4,0), x_(0,0) - x_(3,0)) - x_(5,0));
-    y_(3,0) = x_(3,0);
-    y_(4,0) = x_(4,0);
+    y_(0) = wrapToPi(std::atan2(x_(4) - x_(1), x_(3) - x_(0)) - x_(2));
+    y_(1) = std::sqrt(std::pow(x_(0) - x_(3), 2) + std::pow(x_(1) - x_(4), 2));
+    y_(2) = wrapToPi(std::atan2(x_(1) - x_(4), x_(0) - x_(3)) - x_(5));
+    y_(3) = x_(3);
+    y_(4) = x_(4);
 
     ObservationState noise;
     std::normal_distribution<double> norm_dist(0.0, 1.0);
