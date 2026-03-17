@@ -8,9 +8,9 @@
 namespace uav_ugv_sim {
 
 EkfParams::EkfParams(const StateCov& p_initial, double q_scale, double r_scale)
-    : P0(p_initial), qTune(q_scale), rTune(r_scale) {
-    Q *= qTune;
-    R *= rTune;
+    : P0(p_initial), q_tune(q_scale), r_tune(r_scale) {
+    Q *= q_tune;
+    R *= r_tune;
 }
 
 

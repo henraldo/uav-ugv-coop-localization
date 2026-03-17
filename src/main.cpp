@@ -7,7 +7,27 @@
 
 using namespace uav_ugv_sim;
 
+std::vector<std::string> kCovarDiagRowLabels = {"R", "Q", "P_0"};
+std::vector<std::string> kStateHeaders = {"x_eg", "x_en", "x_ew", "x_ag", "x_an","x_aw"};
+std::vector<std::string> kMeasurementHeaders = {"y_0", "y_1", "y_2", "y_3", "y_4"};
+std::vector<std::string> kEstHeaders = {"xhat_eg", "xhat_en", "xhat_ew", "xhat_ag", "xhat_an","xhat_aw"};
+std::vector<std::string> kErrorHeaders = {"ey_0", "ey_1", "ey_2", "ey_3", "ey_4"};
+std::vector<std::string> kCovHeaders = {"p_00", "p_11", "p_22", "p_33", "p_44", "p_55"};
+
 int main() {
+
+    const size_t max_steps = 100;
+
+    TimeHistoryCollector collector;
+    collector.Reserve(
+        max_steps,
+        kStateHeaders,
+        kMeasurementHeaders,
+        kEstHeaders,
+        kErrorHeaders,
+        kCovHeaders,
+        kCovarDiagRowLabels
+    );
 
     TruthParams truth_data{};
     StateCov Q = truth_data.QTrue;
@@ -19,49 +39,27 @@ int main() {
     EkfParams ekf_params{};
     EKF filter(sys_params.x0, ekf_params);
 
-    double t0 = 0.0;
-    model.propagate(t0, sys_params.u0);
-    model.collectMeasurements();
+    double t = 0.0;
+    for (size_t k = 0; k < max_steps; k++) {
+        model.propagate(t, sys_params.u0);
+        model.collectMeasurements();
 
-    auto state = model.getState();
-    auto z = model.getSensorMeasurement();
+        auto state = model.getState();
+        auto z = model.getSensorMeasurement();
 
-    filter.predict(t0, sys_params.u0);
-    filter.correct(z);
+        filter.predict(t, sys_params.u0);
+        filter.correct(z);
 
-    auto estimate = filter.getEstimatedState();
-    auto residuals = filter.getFilterResiduals();
-    auto covar_diag = filter.getCovarDiagonal();
+        auto estimate = filter.getEstimatedState();
+        auto residuals = filter.getFilterResiduals();
+        auto covar_diag = filter.getCovarDiagonal();
 
-    std::cout << "X: [" << std::endl;
-    for (int i = 0; i < state.rows(); i++) {
-        std::cout << "  " << state(i,0) << "," << std::endl;
+        collector.Record(t, state, z, estimate, residuals, covar_diag);
+        t += DT;
     }
-    std::cout << "]\n" << std::endl;
 
-    std::cout << "Z: [" << std::endl;
-    for (int j = 0; j < z.rows(); j++) {
-        std::cout << "  " << z(j,0) << "," << std::endl;
-    }
-    std::cout << "]" << std::endl;
+    collector.Save("test_run", FilterType::EKF, ekf_params);
 
-    std::cout << "X_HAT: [" << std::endl;
-    for (int j = 0; j < estimate.rows(); j++) {
-        std::cout << "  " << estimate(j,0) << "," << std::endl;
-    }
-    std::cout << "]" << std::endl;
-
-    std::cout << "Y_HAT: [" << std::endl;
-    for (int j = 0; j < residuals.rows(); j++) {
-        std::cout << "  " << residuals(j,0) << "," << std::endl;
-    }
-    std::cout << "]" << std::endl;
-
-    std::cout << "P: [" << std::endl;
-    for (int j = 0; j < covar_diag.rows(); j++) {
-        std::cout << "  " << covar_diag(j,0) << "," << std::endl;
-    }
-    std::cout << "]" << std::endl;
 
     return 0;
 };

@@ -9,8 +9,8 @@ struct EkfParams {
     StateCov Q = Q_TRUE;
     MeasCov R = R_TRUE;
     StateCov Omega = StateCov::Identity() * DT;
-    double qTune = 1.0;
-    double rTune = 1.0;
+    double q_tune = 1.0;
+    double r_tune = 1.0;
 
     EkfParams() = default;
 
