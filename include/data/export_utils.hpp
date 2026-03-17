@@ -1,50 +1,48 @@
 #pragma once
 
 #include "../constants.hpp"
+#include "../filters/ekf.hpp"
+#include <Eigen/Dense>
 #include <string>
 #include <vector>
-#include <array>
 
 namespace uav_ugv_sim {
 
-inline constexpr std::array<std::string_view, 29> SimDataHeaders = {
-    "time",
-    "x_eg",
-    "x_en",
-    "x_ew",
-    "x_ag",
-    "x_an",
-    "x_aw",
-    "y_0",
-    "y_1",
-    "y_2",
-    "y_3",
-    "y_4",
-    "xhat_eg",
-    "xhat_en",
-    "xhat_ew",
-    "xhat_ag",
-    "xhat_an",
-    "xhat_aw",
-    "ey_0",
-    "ey_1",
-    "ey_2",
-    "ey_3",
-    "ey_4",
-    "p_00",
-    "p_11",
-    "p_22",
-    "p_33",
-    "p_44",
-    "p_55"
-};
-inline constexpr std::array<std::string_view, 3> CovarDiagRowLabels = {"R", "Q", "P_0"};
+class TimeHistoryCollector {
+    private:
+        SimHistory data_;
+        SimHistory filter_settings_;
+        std::vector<std::string> headers_;
+        std::vector<std::string> filter_settings_headers_;
+        size_t time_col_{0}, state_col_{0}, meas_col_{0}, est_col_{0}, err_col_{0}, covar_col_{0};
+        size_t total_cols_{0};
+        int row_{0};
 
-void exportSimDataToCSV(
-    const std::string& dataset_name,
-    const std::vector<std::vector<double>>& sim_history,
-    const std::vector<std::vector<double>>& covar_diagonals,
-    const FilterType& filter_type
-);
+    public:
+        void Reserve(
+            size_t max_steps,
+            const std::vector<std::string>& state_headers,
+            const std::vector<std::string>& meas_headers,
+            const std::vector<std::string>& est_headers,
+            const std::vector<std::string>& err_headers,
+            const std::vector<std::string>& covar_headers,
+            const std::vector<std::string>& settings_headers
+        );
+
+        void Record(
+            double t,
+            const SystemState& x_true,
+            const ObservationState& y_true,
+            const SystemState& xhat,
+            const ObservationState& ey,
+            const Eigen::Matrix<double, 6, 1> P_diag
+        );
+
+        void Save(
+            const std::string& dataset_name,
+            const FilterType& filter_type,
+            const EkfParams& filter_params
+        ) const;
+};
 
 }
