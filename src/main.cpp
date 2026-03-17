@@ -1,13 +1,15 @@
 #include "constants.hpp"
 #include "system/dynamics.hpp"
 #include "filters/ekf.hpp"
+#include "data/export_utils.hpp"
 #include <iostream>
 #include <iomanip>
 
-int main() {
-    using namespace uav_ugv_sim;
+using namespace uav_ugv_sim;
 
-    TruthParams truth_data {};
+int main() {
+
+    TruthParams truth_data{};
     StateCov Q = truth_data.QTrue;
     MeasCov R = truth_data.RTrue;
 
@@ -28,7 +30,7 @@ int main() {
     filter.correct(z);
 
     auto estimate = filter.getEstimatedState();
-    auto residuals = filter.getMeasurementResiduals();
+    auto residuals = filter.getFilterResiduals();
     auto covar_diag = filter.getCovarDiagonal();
 
     std::cout << "X: [" << std::endl;
@@ -60,7 +62,6 @@ int main() {
         std::cout << "  " << covar_diag(j,0) << "," << std::endl;
     }
     std::cout << "]" << std::endl;
-
 
     return 0;
 };
