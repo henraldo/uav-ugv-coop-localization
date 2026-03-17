@@ -12,7 +12,7 @@ struct SystemParams {
     ControlInput u0;
 
     SystemParams(
-        const double l = 0.5,
+        const double l = UGV_L,
         const SystemState& x_initial = SystemState(10.0, 0.0, PI / 2.0, -60.0, 0.0, -PI / 2.0),
         const ControlInput& u_initial = ControlInput(2.0, -PI / 18, 12.0, PI / 25.0)
     ) noexcept
@@ -30,16 +30,6 @@ class SystemModel {
         SystemParams params_;
 
         std::mt19937 gen_;
-
-        // ODE integration functor: defines dx/dt = f(x, u) for combined system
-        struct Dynamics {
-            const double& L;
-            const ControlInput& u;
-
-            Dynamics(const double& l, const ControlInput& control_vec);
-
-            void operator()(const SystemState& x, SystemState& dxdt, double) const;
-        };
 
     public:
         SystemModel(

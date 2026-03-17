@@ -9,23 +9,12 @@
 
 namespace uav_ugv_sim {
 
-SystemModel::Dynamics::Dynamics(const double& l, const ControlInput& control_vec) : L(l), u(control_vec) {}
-
-void SystemModel::Dynamics::operator()(const SystemState& x, SystemState& dxdt, double) const {
-    dxdt(0) = u(0) * std::cos(wrapToPi(x(2)));
-    dxdt(1) = u(0) * std::sin(wrapToPi(x(2)));
-    dxdt(2) = (u(0) / L) * std::tan(u(1));
-    dxdt(3) = u(2) * std::cos(wrapToPi(x(5)));
-    dxdt(4) = u(2) * std::sin(wrapToPi(x(5)));
-    dxdt(5) = u(3);
-}
-
 // Constructor Implementation for SystemModel
 SystemModel::SystemModel(const SystemState& x0, const StateCov& Q, const MeasCov& R, const SystemParams& params)
     : x_(x0), Q_(Q), R_(R), params_(params), gen_(std::random_device{}()) {
         // Compute Discrete-Time Cholesky decomps of Q and R for process and meas noise generation
-        StateCov Q_dt = Q * DT;
-        MeasCov R_dt = R * DT;
+        auto Q_dt = Q * DT;
+        auto R_dt = R * DT;
         Eigen::LLT<StateCov> q_llt(Q_dt);
         Eigen::LLT<MeasCov> r_llt(R_dt);
         if (q_llt.info() != Eigen::Success) {
@@ -38,16 +27,18 @@ SystemModel::SystemModel(const SystemState& x0, const StateCov& Q, const MeasCov
         Svy_ = r_llt.matrixL();
     }
 
-// Propagate method implementation
+// Propagate nonlinear system dynamics model
 void SystemModel::propagate(double t0, const ControlInput& u, bool add_noise) {
-    Dynamics dyn(params_.L, u);
+    DynamicsModel dyn(u);
 
     // Suppress false positive uninitialized warnings from ODEINT/Eigen copies
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wuninitialized"
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-    boost::numeric::odeint::runge_kutta4<SystemState> stepper;
-    boost::numeric::odeint::integrate_const(stepper, dyn, x_, t0, DT, DT / 10.0);
+    boost::numeric::odeint::runge_kutta_dopri5<SystemState> stepper;
+    boost::numeric::odeint::integrate_adaptive(
+        boost::numeric::odeint::make_controlled(1e-6, 1e-6, stepper), dyn, x_, t0, DT, DT / 10.0
+    );
 #pragma GCC diagnostic pop
 
     if (add_noise) {

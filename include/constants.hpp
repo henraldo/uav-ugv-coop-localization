@@ -15,6 +15,9 @@ const int TRAJECT_AND_OBS_SIZE = 12; // timestamps + 6 internal states + 5 obser
 // Filter types for Cooperative Localization Simulations
 enum class FilterType {EKF, UKF};
 
+// UGV Wheelbase Length
+const double UGV_L = 0.5;
+
 // type alias for x, F, G, u
 using SystemState = Eigen::Matrix<double, 6, 1>;
 using StateTransition = Eigen::Matrix<double, 6, 6>;
