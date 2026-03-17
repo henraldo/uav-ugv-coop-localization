@@ -12,8 +12,14 @@ namespace uav_ugv_sim {
 // Definitions for global utility functions
 
 inline double wrapToPi(double angle) {
-    return std::fmod(angle + PI, 2 * PI) - PI;
+    const double tau = 2 * PI;
+    return std::fmod(std::fmod(angle + PI, tau) + tau, tau) - PI;
 };
+
+inline double wrapTo2Pi(double angle) {
+    const double tau = 2 * PI;
+    return std::fmod(std::fmod(angle, tau) + tau, tau);
+}
 
 // ODE integration functor: defines dx/dt = f(x, u) for combined system
 struct DynamicsModel {

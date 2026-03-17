@@ -8,15 +8,14 @@
 namespace uav_ugv_sim {
 
 // simulation timestep/sample-rate size
-const double DT = 0.1;
+constexpr double DT = 0.1;
 constexpr double PI = EIGEN_PI;
-const int TRAJECT_AND_OBS_SIZE = 12; // timestamps + 6 internal states + 5 observed states
 
 // Filter types for Cooperative Localization Simulations
 enum class FilterType {EKF, UKF};
 
 // UGV Wheelbase Length
-const double UGV_L = 0.5;
+constexpr double UGV_L = 0.5;
 
 // type alias for x, F, G, u
 using SystemState = Eigen::Matrix<double, 6, 1>;
@@ -34,9 +33,12 @@ using MeasCov = Eigen::Matrix<double, 5, 5>;
 
 using SimHistory = Eigen::MatrixXd;
 
+const StateCov Q_TRUE = Eigen::Matrix<double, 6, 1>(0.001, 0.001, 0.01, 0.001, 0.001, 0.01).asDiagonal();
+const MeasCov R_TRUE = Eigen::Matrix<double, 5, 1>(0.0225, 64.0, 0.04, 36.0, 36.0).asDiagonal();
+
 struct TruthParams {
-    StateCov QTrue = Eigen::Matrix<double, 6, 1>(0.001, 0.001, 0.01, 0.001, 0.001, 0.01).asDiagonal();
-    MeasCov RTrue = Eigen::Matrix<double, 5, 1>(0.0225, 64.0, 0.04, 36.0, 36.0).asDiagonal();
+    StateCov QTrue = Q_TRUE;
+    MeasCov RTrue = R_TRUE;
 
     TruthParams() = default;
 };
