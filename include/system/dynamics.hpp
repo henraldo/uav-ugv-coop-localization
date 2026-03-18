@@ -36,13 +36,13 @@ class SystemModel {
             const SystemParams& params
         );
 
-        void propagate(double t0, const ControlInput& u, bool add_noise = true);
+        void Propagate(double t0, const ControlInput& u, bool add_noise = true);
 
-        void collectMeasurements();
+        void CollectMeasurements();
 
-        const SystemState& getState() const;
+        const SystemState& GetState() const;
 
-        const ObservationState& getSensorMeasurement() const;
+        const ObservationState& GetSensorMeasurement() const;
 };
 
 }

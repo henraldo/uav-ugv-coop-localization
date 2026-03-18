@@ -1,12 +1,12 @@
 #include "constants.hpp"
 #include "system/dynamics.hpp"
+#include "filters/estimator.hpp"
 #include "filters/ekf.hpp"
 #include "data/export_utils.hpp"
 #include <iostream>
 #include <iomanip>
 
 using namespace uav_ugv_sim;
-
 
 int main() {
 
@@ -22,31 +22,30 @@ int main() {
     SystemParams sys_params{};
     SystemModel model(sys_params.x0, Q, R, sys_params);
 
-    EkfParams ekf_params{};
+    FilterParams ekf_params{};
     EKF filter(sys_params.x0, ekf_params);
     collector.SaveFilterSettings("test_run", ekf_params);
 
     double t = 0.0;
     for (size_t k = 0; k < max_steps; k++) {
-        model.propagate(t, sys_params.u0);
-        model.collectMeasurements();
+        model.Propagate(t, sys_params.u0);
+        model.CollectMeasurements();
 
-        auto state = model.getState();
-        auto z = model.getSensorMeasurement();
+        auto state = model.GetState();
+        auto z = model.GetSensorMeasurement();
 
-        filter.predict(t, sys_params.u0);
-        filter.correct(z);
+        filter.Predict(t, sys_params.u0);
+        filter.Correct(z);
 
-        auto estimate = filter.getEstimatedState();
-        auto residuals = filter.getFilterResiduals();
-        auto covar_diag = filter.getCovarDiagonal();
+        auto estimate = filter.GetEstimatedState();
+        auto residuals = filter.GetFilterResiduals();
+        auto covar_diag = filter.GetCovarDiagonal();
 
         collector.Record(t, state, z, estimate, residuals, covar_diag);
         t += DT;
     }
 
-    collector.Save("test_run", FilterType::EKF);
-
+    collector.Save("test_run", EstimatorType::EKF);
 
     return 0;
 };

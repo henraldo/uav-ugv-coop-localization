@@ -60,7 +60,7 @@ void TimeHistoryCollector::Record(
 
 void TimeHistoryCollector::Save(
     const std::string& dataset_name,
-    const FilterType& filter_type
+    const EstimatorType& filter_type
 ) const {
     if (row_ == 0) return;
 
@@ -77,7 +77,7 @@ void TimeHistoryCollector::Save(
     }
 
     std::string filter;
-    if (filter_type == FilterType::EKF) {
+    if (filter_type == EstimatorType::EKF) {
         filter = "ekf_";
     } else {
         filter = "ukf_";
@@ -107,7 +107,7 @@ void TimeHistoryCollector::Save(
 
 void TimeHistoryCollector::SaveFilterSettings(
     const std::string& dataset_name,
-    const EkfParams& filter_params
+    const FilterParams& filter_params
 ) const {
     // Build full path to output directory
     std::string output_dir = "simulation_output";

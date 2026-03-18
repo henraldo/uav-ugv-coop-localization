@@ -11,9 +11,6 @@ namespace uav_ugv_sim {
 constexpr double DT = 0.1;
 constexpr double PI = EIGEN_PI;
 
-// Filter types for Cooperative Localization Simulations
-enum class FilterType {EKF, UKF};
-
 // UGV Wheelbase Length
 constexpr double UGV_L = 0.5;
 

@@ -33,7 +33,7 @@ FetchContent_MakeAvailable(Boost)
 
 # Main library for shared sim code
 add_library(vehicle_lib STATIC
-    src/filters/ekf.cpp
+    src/filters/estimator.cpp
     src/system/dynamics.cpp
     src/data/export_utils.cpp
 )

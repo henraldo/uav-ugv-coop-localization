@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../constants.hpp"
-#include "../filters/ekf.hpp"
+#include "../filters/estimator.hpp"
 #include <Eigen/Dense>
 #include <string>
 #include <vector>
@@ -42,12 +42,12 @@ class TimeHistoryCollector {
 
         void Save(
             const std::string& dataset_name,
-            const FilterType& filter_type
+            const EstimatorType& filter_type
         ) const;
 
         void SaveFilterSettings(
             const std::string& dataset_name,
-            const EkfParams& filter_params
+            const FilterParams& filter_params
         ) const;
 };
 

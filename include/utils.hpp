@@ -2,15 +2,13 @@
 
 #include "constants.hpp"
 #include <cmath>
-#include <fstream>
-#include <filesystem>
-#include <string>
-#include <vector>
-#include <iostream>
+#include <limits>
+#include <stdexcept>
 
 namespace uav_ugv_sim {
 // Definitions for global utility functions
 
+// Trig helper functions
 inline double wrapToPi(double angle) {
     const double tau = 2 * PI;
     return std::fmod(std::fmod(angle + PI, tau) + tau, tau) - PI;
@@ -19,7 +17,18 @@ inline double wrapToPi(double angle) {
 inline double wrapTo2Pi(double angle) {
     const double tau = 2 * PI;
     return std::fmod(std::fmod(angle, tau) + tau, tau);
-}
+};
+
+template <typename T = double>
+constexpr T sec(T theta) noexcept {
+    static_assert(std::is_floating_point_v<T>, "Only floating point types allowed");
+
+    const T c = std::cos(theta);
+    if (std::abs(c) < std::numeric_limits<T>::epsilon() * T(10)) {
+        return std::numeric_limits<T>::quiet_NaN();
+    }
+    return T(1) / c;
+};
 
 // ODE integration functor: defines dx/dt = f(x, u) for combined system
 struct DynamicsModel {

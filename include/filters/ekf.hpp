@@ -1,47 +1,61 @@
 #pragma once
 
 #include "../constants.hpp"
+#include "utils.hpp"
+#include "estimator.hpp"
+#include <boost/numeric/odeint.hpp>
+#include <boost/numeric/odeint/external/eigen/eigen.hpp>
+#include <cmath>
 
 namespace uav_ugv_sim {
 
-struct EkfParams {
-    StateCov P0 = Eigen::Matrix<double, 6, 1>(5.0, 5.0, 2.0, 20.0, 20.0, 2.0).asDiagonal();
-    StateCov Q = Q_TRUE;
-    MeasCov R = R_TRUE;
-    StateCov Omega = StateCov::Identity() * DT;
-    double q_tune = 1.0;
-    double r_tune = 1.0;
-
-    EkfParams() = default;
-
-    explicit EkfParams(const StateCov& p_initial, const double q_scale, const double r_scale);
-};
-
-class EKF {
-    private:
-        SystemState xhat_;
-        ObservationState ey_;
-        StateCov P_;
-        EkfParams params_;
-
-        auto computeJacobianF(const SystemState& xhat, const ControlInput& u, double dt) const -> StateTransition;
-
-        auto measurmentModel(const SystemState& xhat) const -> ObsSensativity;
+class EKF : public Estimator {
 
     public:
-        EKF(const SystemState& x0, const EkfParams& m_params);
+        EKF(const SystemState& x0, FilterParams& filter_params) : Estimator(x0, filter_params) {
+            estimator_type_ = EstimatorType::EKF;
+        }
 
-        void propagate(double t0, const ControlInput& u);
+        void Propagate(double t0, const ControlInput& u) override {
+            DynamicsModel dyn(u);
 
-        void predict(double t0, const ControlInput& u);
+            // Suppress false positive uninitialized warnings from ODEINT/Eigen copies
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wuninitialized"
+        #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+            boost::numeric::odeint::runge_kutta_dopri5<SystemState> stepper;
+            boost::numeric::odeint::integrate_adaptive(
+                boost::numeric::odeint::make_controlled(1e-6, 1e-6, stepper), dyn, xhat_, t0, DT, DT / 10.0
+            );
+        #pragma GCC diagnostic pop
 
-        void correct(const ObservationState& z);
+            // ensure UGV and UAV headings are wrapped to [0, 2pi]
+            // xhat_(2) = wrapTo2Pi(xhat_(2));
+            // xhat_(5) = wrapTo2Pi(xhat_(5));
+        }
 
-        const SystemState& getEstimatedState() const;
+        void Predict(double t0, const ControlInput& u) override {
+            EKF::Propagate(t0, u);
+            auto F = EKF::ComputeJacobianF(xhat_, u, DT);
+            P_ = F * P_ * F.transpose() + (params_.Omega * params_.Q * params_.Omega.transpose());
+        }
 
-        const ObservationState& getFilterResiduals() const;
+        void Correct(const ObservationState& z) override {
+            auto H = EKF::MeasurmentModel(xhat_);
+            ey_ = z - (H * xhat_);
 
-        const SystemState getCovarDiagonal() const;
+            ey_(0) = wrapToPi(ey_(0));
+            ey_(2) = wrapToPi(ey_(2));
+
+            auto S = H * P_ * H.transpose() + params_.R;
+            auto K = P_ * H.transpose() * S.inverse();
+
+            xhat_ += K * ey_;
+            // xhat_(2) = wrapTo2Pi(xhat_(2));
+            // xhat_(5) = wrapTo2Pi(xhat_(5));
+
+            P_ = (StateCov::Identity() - K * H) * P_;
+        }
 };
 
 }

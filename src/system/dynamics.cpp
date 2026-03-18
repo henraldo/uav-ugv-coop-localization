@@ -34,7 +34,7 @@ SystemModel::SystemModel(const SystemState& x0, const StateCov& Q, const MeasCov
     }
 
 // Propagate nonlinear system dynamics model
-void SystemModel::propagate(double t0, const ControlInput& u, bool add_noise) {
+void SystemModel::Propagate(double t0, const ControlInput& u, bool add_noise) {
     DynamicsModel dyn(u);
 
     // Suppress false positive uninitialized warnings from ODEINT/Eigen copies
@@ -62,7 +62,7 @@ void SystemModel::propagate(double t0, const ControlInput& u, bool add_noise) {
     // x_(5) = wrapTo2Pi(x_(5));
 }
 
-void SystemModel::collectMeasurements() {
+void SystemModel::CollectMeasurements() {
     y_(0) = wrapToPi(std::atan2(x_(4) - x_(1), x_(3) - x_(0)) - x_(2));
     y_(1) = std::sqrt(std::pow(x_(0) - x_(3), 2) + std::pow(x_(1) - x_(4), 2));
     y_(2) = wrapToPi(std::atan2(x_(1) - x_(4), x_(0) - x_(3)) - x_(5));
@@ -79,8 +79,8 @@ void SystemModel::collectMeasurements() {
 }
 
 // Getter implementations
-const SystemState& SystemModel::getState() const { return x_; }
-const ObservationState& SystemModel::getSensorMeasurement() const { return y_; };
+const SystemState& SystemModel::GetState() const { return x_; }
+const ObservationState& SystemModel::GetSensorMeasurement() const { return y_; };
 
 
 }
