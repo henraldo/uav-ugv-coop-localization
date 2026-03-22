@@ -38,11 +38,11 @@ struct DynamicsModel {
     DynamicsModel(const ControlInput& control_vec, const double& l = UGV_L) : u(control_vec), L(l) {}
 
     void operator()(const SystemState& x, SystemState& dxdt, double) const{
-        dxdt(0) = u(0) * std::cos(wrapToPi(x(2)));
-        dxdt(1) = u(0) * std::sin(wrapToPi(x(2)));
+        dxdt(0) = u(0) * std::cos(x(2));
+        dxdt(1) = u(0) * std::sin(x(2));
         dxdt(2) = (u(0) / L) * std::tan(u(1));
-        dxdt(3) = u(2) * std::cos(wrapToPi(x(5)));
-        dxdt(4) = u(2) * std::sin(wrapToPi(x(5)));
+        dxdt(3) = u(2) * std::cos(x(5));
+        dxdt(4) = u(2) * std::sin(x(5));
         dxdt(5) = u(3);
     };
 };

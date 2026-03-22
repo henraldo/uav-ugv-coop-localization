@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../constants.hpp"
+#include "constants.hpp"
 #include "utils.hpp"
 #include "estimator.hpp"
 #include <boost/numeric/odeint.hpp>
@@ -29,9 +29,9 @@ class EKF : public Estimator {
             );
         #pragma GCC diagnostic pop
 
-            // ensure UGV and UAV headings are wrapped to [0, 2pi]
-            // xhat_(2) = wrapTo2Pi(xhat_(2));
-            // xhat_(5) = wrapTo2Pi(xhat_(5));
+            // ensure UGV and UAV headings are wrapped to [-pi, pi]
+            xhat_(2) = wrapToPi(xhat_(2));
+            xhat_(5) = wrapToPi(xhat_(5));
         }
 
         void Predict(double t0, const ControlInput& u) override {
@@ -51,8 +51,8 @@ class EKF : public Estimator {
             auto K = P_ * H.transpose() * S.inverse();
 
             xhat_ += K * ey_;
-            // xhat_(2) = wrapTo2Pi(xhat_(2));
-            // xhat_(5) = wrapTo2Pi(xhat_(5));
+            xhat_(2) = wrapToPi(xhat_(2));
+            xhat_(5) = wrapToPi(xhat_(5));
 
             P_ = (StateCov::Identity() - K * H) * P_;
         }

@@ -57,9 +57,9 @@ void SystemModel::Propagate(double t0, const ControlInput& u, bool add_noise) {
         x_ += Svx_ * noise;
     }
 
-    // ensure UGV and UAV headings are wrapped to [0, 2pi]
-    // x_(2) = wrapTo2Pi(x_(2));
-    // x_(5) = wrapTo2Pi(x_(5));
+    // ensure UGV and UAV headings are wrapped to [-pi, pi]
+    x_(2) = wrapToPi(x_(2));
+    x_(5) = wrapToPi(x_(5));
 }
 
 void SystemModel::CollectMeasurements() {
