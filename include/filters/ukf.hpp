@@ -52,16 +52,21 @@ namespace uav_ugv_sim
             for (int i = 0; i < L_; i++)
             {
                 sp_x_.col(i + 1) = xhat_ + (gamma * Svp);
+                sp_x_(2, i + 1) = WrapToPi(sp_x_(2, i + 1));
+                sp_x_(5, i + 1) = WrapToPi(sp_x_(5, i + 1));
+
                 sp_x_.col(i + 1 + n_) = xhat_ - (gamma * Svp);
+                sp_x_(2, i + 1 + n_) = WrapToPi(sp_x_(2, i + 1 + n_));
+                sp_x_(5, i + 1 + n_) = WrapToPi(sp_x_(5, i + 1 + n_));
             }
         }
 
-        auto SensorModel(const SystemState& x) const -> ObservationState
+        auto SensorModel(const SystemState &x) const -> ObservationState
         {
             ObservationState z;
-            z(0) = wrapToPi(std::atan2(x(4) - x(1), x(3) - x(0)) - x(2));
+            z(0) = WrapToPi(std::atan2(x(4) - x(1), x(3) - x(0)) - x(2));
             z(1) = std::sqrt(std::pow(x(0) - x(3), 2) + std::pow(x(1) - x(4), 2));
-            z(2) = wrapToPi(std::atan2(x(1) - x(4), x(0) - x(3)) - x(5));
+            z(2) = WrapToPi(std::atan2(x(1) - x(4), x(0) - x(3)) - x(5));
             z(3) = x(3);
             z(4) = x(4);
 
@@ -70,8 +75,8 @@ namespace uav_ugv_sim
 
     public:
         UKF(
-            const SystemState& x0,
-            const FilterParams& filter_params,
+            const SystemState &x0,
+            const FilterParams &filter_params,
             const double alpha,
             const double beta,
             const double kappa) : Estimator(x0, filter_params), alpha_(alpha), beta_(beta), kappa_(kappa)
@@ -86,7 +91,7 @@ namespace uav_ugv_sim
             ComputeSigmaPoints();
         };
 
-        void Propagate(double t0, const ControlInput& u) override
+        void Propagate(double t0, const ControlInput &u) override
         {
             DynamicsModel dyn(u);
 
@@ -101,14 +106,14 @@ namespace uav_ugv_sim
                 boost::numeric::odeint::integrate_adaptive(
                     boost::numeric::odeint::make_controlled(1e-6, 1e-6, stepper), dyn, x, t0, DT, DT / 10.0);
 
-                x(2) = wrapToPi(x(2));
-                x(5) = wrapToPi(x(5));
+                x(2) = WrapToPi(x(2));
+                x(5) = WrapToPi(x(5));
                 sp_x_.col(i) = x;
             }
 #pragma GCC diagnostic pop
         }
 
-        void Predict(double t0, const ControlInput& u) override
+        void Predict(double t0, const ControlInput &u) override
         {
             UKF::Propagate(t0, u);
             xhat_ = sp_x_ * weights_mean_;
@@ -116,12 +121,14 @@ namespace uav_ugv_sim
             for (int i = 0; i < L_; i++)
             {
                 SystemState d_xx = sp_x_.col(i) - xhat_;
+                d_xx(2) = WrapToPi(d_xx(2));
+                d_xx(5) = WrapToPi(d_xx(5));
                 P_ += weights_covar_(i) * (d_xx * d_xx.transpose());
             }
             P_ += params_.Q;
         }
 
-        void Correct(const ObservationState& z) override
+        void Correct(const ObservationState &z) override
         {
             int m = z.rows();
             SigmaPoints sp_z(m, L_);
@@ -134,14 +141,16 @@ namespace uav_ugv_sim
             ObservationState yhat_ = sp_z * weights_covar_;
             ey_ = z - yhat_;
 
-            ey_(0) = wrapToPi(ey_(0));
-            ey_(2) = wrapToPi(ey_(2));
+            ey_(0) = WrapToPi(ey_(0));
+            ey_(2) = WrapToPi(ey_(2));
 
             Eigen::MatrixXd Pyy = Eigen::MatrixXd::Zero(m, m);
             for (int i = 0; i < L_; i++)
             {
-                ObservationState dyy = sp_z.col(i) - yhat_;
-                Pyy += weights_covar_(i) * (dyy * dyy.transpose());
+                ObservationState d_yy = sp_z.col(i) - yhat_;
+                d_yy(0) = WrapToPi(d_yy(0));
+                d_yy(2) = WrapToPi(d_yy(2));
+                Pyy += weights_covar_(i) * (d_yy * d_yy.transpose());
             }
             Pyy += params_.R;
 
@@ -150,7 +159,12 @@ namespace uav_ugv_sim
             for (int i = 0; i < L_; i++)
             {
                 SystemState dx = sp_x_.col(i) - xhat_;
+                dx(2) = WrapToPi(dx(2));
+                dx(5) = WrapToPi(dx(5));
+
                 ObservationState dy = sp_z.col(i) - yhat_;
+                dy(0) = WrapToPi(dy(0));
+                dy(2) = WrapToPi(dy(2));
                 Pxy += weights_covar_(i) * (dx * dy.transpose());
             }
 
@@ -158,8 +172,8 @@ namespace uav_ugv_sim
             xhat_ += K * ey_;
             P_ -= K * Pyy * K.transpose();
 
-            xhat_(2) = wrapToPi(xhat_(2));
-            xhat_(5) = wrapToPi(xhat_(5));
+            xhat_(2) = WrapToPi(xhat_(2));
+            xhat_(5) = WrapToPi(xhat_(5));
         }
     };
 

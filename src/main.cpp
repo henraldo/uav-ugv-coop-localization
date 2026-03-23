@@ -2,6 +2,7 @@
 #include "system/dynamics.hpp"
 #include "filters/estimator.hpp"
 #include "filters/ekf.hpp"
+#include "filters/ukf.hpp"
 #include "data/export_utils.hpp"
 #include <iostream>
 #include <iomanip>
@@ -22,9 +23,13 @@ int main() {
     SystemParams sys_params{};
     SystemModel model(sys_params.x0, Q, R, sys_params);
 
-    FilterParams ekf_params{};
-    EKF filter(sys_params.x0, ekf_params);
-    collector.SaveFilterSettings("test_run", ekf_params);
+    // FilterParams ekf_params{};
+    // EKF filter(sys_params.x0, ekf_params);
+    // collector.SaveFilterSettings("test_run3", ekf_params);
+
+    FilterParams ukf_params{};
+    UKF filter(sys_params.x0, ukf_params, 1e-2, 2, 0);
+    collector.SaveFilterSettings("test_run2", ukf_params);
 
     double t = 0.0;
     for (size_t k = 0; k < max_steps; k++) {
@@ -45,7 +50,7 @@ int main() {
         t += DT;
     }
 
-    collector.Save("test_run", EstimatorType::EKF);
+    collector.Save("test_run2", EstimatorType::UKF);
 
     return 0;
 };
