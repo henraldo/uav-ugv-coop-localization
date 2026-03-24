@@ -6,6 +6,7 @@ Truth Model Testing (TMT) - where Monte Carlo trials are run to collect NEES and
 Time history data generated from the simulation (along with filter implementation settings) are written to CSV files and placed in a user-defined subdirectory under `/project-root/simulation_output/` for post-processing and analysis.
 
 # Simulation Overview
+<img width="652" height="239" alt="system_diagram" src="https://github.com/user-attachments/assets/5b0029d4-67ff-4e23-aa43-b61e219730c7" />
 
 ## State-Space System Definition
 
