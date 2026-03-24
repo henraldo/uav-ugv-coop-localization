@@ -110,7 +110,7 @@ $$\boldsymbol{\dot{x}} (t) = \begin{bmatrix}
     u_3 cos x_6 \\
     u_3 sin x_6 \\
     u_4 \\
-\end{bmatrix} = \boldsymbol{f} (x,u) + \boldsymbol{\Gamma} \boldsymbol{\tilde{w}} (t)
+\end{bmatrix} + \boldsymbol{\Gamma} \boldsymbol{\tilde{w}} (t)
 $$
 
 Lastly, the combined system's sensing model is defined as:
@@ -120,7 +120,7 @@ $$\boldsymbol{y} (t) = \begin{bmatrix}
     tan^{-1} \frac{x_2-x_5}{x_1-x_4} - x_6\\
     x_4\\
     x_5\\
-\end{bmatrix} + \boldsymbol{\tilde{v}} (t) = \boldsymbol{h}(x) + \boldsymbol{\tilde{v}} (t)
+\end{bmatrix} + \boldsymbol{\tilde{v}} (t)
 $$
 
 ## Project Build
