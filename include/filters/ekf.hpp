@@ -7,20 +7,17 @@
 #include <boost/numeric/odeint/external/eigen/eigen.hpp>
 #include <cmath>
 
-namespace uav_ugv_sim
-{
+namespace uav_ugv_sim {
 
     class EKF : public Estimator
     {
 
     public:
-        EKF(const SystemState &x0, FilterParams &filter_params) : Estimator(x0, filter_params)
-        {
+        EKF(const SystemState& x0, FilterParams& filter_params) : Estimator(x0, filter_params) {
             estimator_type_ = EstimatorType::EKF;
         }
 
-        void Propagate(double t0, const ControlInput &u) override
-        {
+        void Propagate(double t0, const ControlInput& u) override {
             DynamicsModel dyn(u);
 
             // Suppress false positive uninitialized warnings from ODEINT/Eigen copies
@@ -37,15 +34,13 @@ namespace uav_ugv_sim
             xhat_(5) = WrapToPi(xhat_(5));
         }
 
-        void Predict(double t0, const ControlInput &u) override
-        {
+        void Predict(double t0, const ControlInput& u) override {
             EKF::Propagate(t0, u);
             auto F = EKF::ComputeJacobianF(xhat_, u, DT);
             P_ = F * P_ * F.transpose() + (params_.Omega * params_.Q * params_.Omega.transpose());
         }
 
-        void Correct(const ObservationState &z) override
-        {
+        void Correct(const ObservationState& z) override {
             auto H = EKF::MeasurmentModel(xhat_);
             ey_ = z - (H * xhat_);
 

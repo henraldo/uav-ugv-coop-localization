@@ -10,12 +10,11 @@ namespace uav_ugv_sim
 
     Estimator::~Estimator() = default;
 
-    Estimator::Estimator(const SystemState &x0, const FilterParams &filter_params)
+    Estimator::Estimator(const SystemState& x0, const FilterParams& filter_params)
         : xhat_(x0), P_(filter_params.P0), params_(filter_params) {}
 
     // Generates linearized measurement model updates for filter innovation calculation
-    auto Estimator::MeasurmentModel(const SystemState &xhat) const -> ObsSensativity
-    {
+    auto Estimator::MeasurmentModel(const SystemState& xhat) const -> ObsSensativity {
         ObsSensativity H = ObsSensativity::Zero();
 
         H(0, 0) = (xhat(4) - xhat(1)) / (std::pow(xhat(4) - xhat(1), 2) / std::pow(xhat(3) - xhat(0), 2) + 1) * std::pow(xhat(3) - xhat(0), 2);
@@ -39,8 +38,7 @@ namespace uav_ugv_sim
     }
 
     // Generates linearized discrete-time state transition matrix from plant dynamics for estimator
-    auto Estimator::ComputeJacobianF(const SystemState &xhat, const ControlInput &u, double dt) const -> StateTransition
-    {
+    auto Estimator::ComputeJacobianF(const SystemState& xhat, const ControlInput& u, double dt) const -> StateTransition {
         StateTransition A = StateTransition::Zero();
 
         A(0, 2) = -u(0) * std::sin(WrapToPi(xhat(2)));
@@ -54,8 +52,7 @@ namespace uav_ugv_sim
     }
 
     // Generates linearized discrete-time control input matrix from plant dynamics for estimator
-    auto Estimator::ComputeJacobianG(const SystemState &xhat, const ControlInput &u, double dt) const -> ControlMatrix
-    {
+    auto Estimator::ComputeJacobianG(const SystemState& xhat, const ControlInput& u, double dt) const -> ControlMatrix {
         ControlMatrix B = ControlMatrix::Zero();
 
         B(0, 0) = std::cos(WrapToPi(xhat(2)));
@@ -72,8 +69,8 @@ namespace uav_ugv_sim
     }
 
     // Getter implementations
-    const SystemState &Estimator::GetEstimatedState() const { return xhat_; }
-    const ObservationState &Estimator::GetFilterResiduals() const { return ey_; }
+    const SystemState& Estimator::GetEstimatedState() const { return xhat_; }
+    const ObservationState& Estimator::GetFilterResiduals() const { return ey_; }
     const Eigen::Matrix<double, 6, 1> Estimator::GetCovarDiagonal() const { return P_.diagonal(); }
 
 }
