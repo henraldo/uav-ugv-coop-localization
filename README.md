@@ -42,11 +42,11 @@ $$
 
 Here $L$ is the wheel base length of the UGV, and velocity and steering angle control inputs are limited to
 
-$$v_{g, max} = 3 \; m/s$$
+$$v_{g, max} = 3 \ m/s$$
 
 and
 
-$$\phi_g \; \epsilon \; [-\frac{5\pi}{12},\frac{5\pi}{12}]\;rad$$
+$$\phi_g \ \epsilon \ [-\frac{5\pi}{12},\frac{5\pi}{12}]\ rad$$
 
 ### UAV Model
 The equations of motion used to define the UAV dynamics model are as follows:
@@ -76,11 +76,11 @@ $$
 
 The UAV velocity and steering rate inputs are limited to
 
-$$v_a \; \epsilon \; [10, 20] \; m/s$$
+$$v_a \ \epsilon \ [10, 20] \ m/s$$
 
 and
 
-$$\omega_a \;  \epsilon \; [-\frac{\pi}{6},\frac{\pi}{6}] \; rad/s$$
+$$\omega_a \  \epsilon \ [-\frac{\pi}{6},\frac{\pi}{6}] \ rad/s$$
 
 ### Combined System Model
 The combined system state, control input, and disturbance input vectors are defined as
