@@ -40,10 +40,12 @@ $$\boldsymbol{\tilde{w}}_g (t) = \begin{bmatrix}
 \end{bmatrix}
 $$
 
-Here $L$ is the wheel base length of the UGV, and velocity and steering angle control inputs are
-limited to
+Here $L$ is the wheel base length of the UGV, and velocity and steering angle control inputs are limited to
+
 $$v_{g, max} = 3 \; m/s$$
+
 and
+
 $$\phi_g \; \epsilon \; [-\frac{5\pi}{12},\frac{5\pi}{12}]\;rad$$
 
 ### UAV Model
@@ -73,8 +75,11 @@ $$\boldsymbol{\tilde{w}}_a (t) = \begin{bmatrix}
 $$
 
 The UAV velocity and steering rate inputs are limited to
+
 $$v_a \; \epsilon \; [10, 20] \; m/s$$
+
 and
+
 $$\omega_a \;  \epsilon \; [-\frac{\pi}{6},\frac{\pi}{6}] \; rad/s$$
 
 ### Combined System Model
@@ -103,6 +108,7 @@ $$\boldsymbol{\tilde{w}} (t) = \begin{bmatrix}
 $$
 
 and the combined nonlinear state-space system is defined as
+
 $$\boldsymbol{\dot{x}} (t) = \begin{bmatrix}
     u_1 cos x_3 \\
     u_1 sin x_3 \\
@@ -113,7 +119,8 @@ $$\boldsymbol{\dot{x}} (t) = \begin{bmatrix}
 \end{bmatrix} + \boldsymbol{\Gamma} \boldsymbol{\tilde{w}} (t)
 $$
 
-Lastly, the combined system's sensing model is defined as:
+Lastly, the combined system's sensing model is defined as
+
 $$\boldsymbol{y} (t) = \begin{bmatrix}
     tan^{-1} \frac{x_5-x_2}{x_4-x_1} - x_3\\
     \sqrt{(x_1 - x_4)^{2} + (x_2 - x_5)^{2}}\\
