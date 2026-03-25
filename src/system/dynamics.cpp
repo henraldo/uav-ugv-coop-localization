@@ -9,14 +9,12 @@
 
 namespace uav_ugv_sim {
 
-    SystemParams::SystemParams(
-        const double l,
-        const SystemState& x_initial,
-        const ControlInput& u_initial) : L(l), x0(x_initial), u0(u_initial) {}
+    SystemParams::SystemParams(const SystemState& x_initial, const ControlInput& u_initial)
+        : x0(x_initial), u0(u_initial) {}
 
     // Constructor Implementation for SystemModel
-    SystemModel::SystemModel(const SystemState& x0, const StateCov& Q, const MeasCov& R, const SystemParams& params)
-        : x_(x0), Q_(Q), R_(R), params_(params), gen_(std::random_device{}()) {
+    SystemModel::SystemModel(const SystemState& x0, const StateCov& Q, const MeasCov& R)
+        : x_(x0), Q_(Q), R_(R), gen_(std::random_device{}()) {
 
         // Compute Discrete-Time Cholesky decomps of Q and R for process and meas noise generation
         auto Q_dt = Q * DT;

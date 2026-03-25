@@ -7,13 +7,12 @@
 namespace uav_ugv_sim {
 
 struct SystemParams {
-    double L = UGV_L;
     SystemState x0 = SystemState(10.0, 0.0, PI / 2.0, -60.0, 0.0, -PI / 2.0);
     ControlInput u0 = ControlInput(2.0, -PI / 18, 12.0, PI / 25.0);
 
     SystemParams() = default;
 
-    explicit SystemParams(const double l, const SystemState& x_initial, const ControlInput& u_initial);
+    explicit SystemParams(const SystemState& x_initial, const ControlInput& u_initial);
 };
 
 class SystemModel {
@@ -24,17 +23,11 @@ class SystemModel {
         StateCov Svx_;
         MeasCov R_;
         MeasCov Svy_;
-        SystemParams params_;
 
         std::mt19937 gen_;
 
     public:
-        SystemModel(
-            const SystemState& x0,
-            const StateCov& Q,
-            const MeasCov& R,
-            const SystemParams& params
-        );
+        SystemModel(const SystemState& x0, const StateCov& Q, const MeasCov& R);
 
         void Propagate(double t0, const ControlInput& u, bool add_noise = true);
 

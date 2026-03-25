@@ -22,6 +22,7 @@ namespace uav_ugv_sim {
         SigmaPoints sp_x_;
         ObservationState yhat_;
 
+        // Updates the sets of weights for next state and covariance predictions
         void UpdateWeights() {
             lambda_ = alpha_ * alpha_ * (n_ + kappa_) - n_;
 
@@ -37,6 +38,7 @@ namespace uav_ugv_sim {
             }
         }
 
+        // Generate sigma points from last estimated state for next filter prediction step
         void ComputeSigmaPoints() {
             double gamma = std::sqrt(n_ + lambda_);
 
@@ -45,16 +47,17 @@ namespace uav_ugv_sim {
 
             sp_x_.col(0) = xhat_;
             for (int i = 0; i < L_; i++) {
-                sp_x_.col(i + 1) = xhat_ + (gamma * Svp);
+                sp_x_.col(i + 1) = xhat_ + (gamma * Svp.col(i));
                 sp_x_(2, i + 1) = WrapToPi(sp_x_(2, i + 1));
                 sp_x_(5, i + 1) = WrapToPi(sp_x_(5, i + 1));
 
-                sp_x_.col(i + 1 + n_) = xhat_ - (gamma * Svp);
+                sp_x_.col(i + 1 + n_) = xhat_ - (gamma * Svp.col(i));
                 sp_x_(2, i + 1 + n_) = WrapToPi(sp_x_(2, i + 1 + n_));
                 sp_x_(5, i + 1 + n_) = WrapToPi(sp_x_(5, i + 1 + n_));
             }
         }
 
+        // Generates measurements for fully nonlinear measurement model
         auto SensorModel(const SystemState& x) const -> ObservationState {
             ObservationState z;
             z(0) = WrapToPi(std::atan2(x(4) - x(1), x(3) - x(0)) - x(2));
@@ -81,15 +84,15 @@ namespace uav_ugv_sim {
             sp_x_.resize(n_, L_);
 
             UpdateWeights();
-            ComputeSigmaPoints();
         };
 
+        // Propagate nonlinear system dynamics model
         void Propagate(double t0, const ControlInput& u) override {
             DynamicsModel dyn(u);
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wuninitialized"
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wuninitialized"
+    #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
             for (int i = 0; i < L_; i++) {
                 SystemState x = sp_x_.col(i);
 
@@ -101,10 +104,13 @@ namespace uav_ugv_sim {
                 x(5) = WrapToPi(x(5));
                 sp_x_.col(i) = x;
             }
-#pragma GCC diagnostic pop
+    #pragma GCC diagnostic pop
         }
 
+        // Performs state and covariance predictions
         void Predict(double t0, const ControlInput& u) override {
+            ComputeSigmaPoints();
+
             UKF::Propagate(t0, u);
             xhat_ = sp_x_ * weights_mean_;
 
@@ -117,6 +123,7 @@ namespace uav_ugv_sim {
             P_ += params_.Q;
         }
 
+        // Corrects state and covariance predictions from latest observations
         void Correct(const ObservationState& z) override {
             int m = z.rows();
             SigmaPoints sp_z(m, L_);

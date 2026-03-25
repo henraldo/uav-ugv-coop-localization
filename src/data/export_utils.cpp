@@ -101,6 +101,7 @@ void TimeHistoryCollector::Save(
         }
         sim_csv_file << final_data(i, final_data.cols() - 1) << std::endl;
     }
+    sim_csv_file.flush();
     sim_csv_file.close();
     std::cout << "Exported simulation data to " << sim_data << std::endl;
 }
@@ -140,6 +141,7 @@ void TimeHistoryCollector::SaveFilterSettings(
         }
         covar_csv_file << std::endl;
     }
+    covar_csv_file.flush();
     covar_csv_file.close();
     std::cout << "Exported covar matrix diagonal data to " << covar_data << std::endl;
 }
