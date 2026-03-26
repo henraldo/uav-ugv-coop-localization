@@ -1,11 +1,20 @@
 #pragma once
 
 #include "../constants.hpp"
+#include <string_view>
 
 namespace uav_ugv_sim {
 
     // Available filter types for Cooperative Localization Simulations
-    enum class EstimatorType { EKF, UKF };
+    enum class EstimatorType : std::uint8_t { EKF, UKF };
+
+    constexpr std::string_view ToString(EstimatorType estimator) {
+        switch (estimator) {
+            case EstimatorType::EKF: return "EKF";
+            case EstimatorType::UKF: return "UKF";
+        }
+        return "Unknown";
+    }
 
     struct FilterParams {
         StateCov P0 = Eigen::Matrix<double, 6, 1>(5.0, 5.0, 2.0, 20.0, 20.0, 2.0).asDiagonal();

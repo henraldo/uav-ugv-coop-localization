@@ -6,6 +6,7 @@
 #include "data/export_utils.hpp"
 #include <iostream>
 #include <iomanip>
+#include <memory>
 
 using namespace uav_ugv_sim;
 
@@ -20,37 +21,49 @@ int main() {
     StateCov Q = truth_data.QTrue;
     MeasCov R = truth_data.RTrue;
 
+    // Setup Simulation
     SystemParams sys_params{};
-    SystemModel model(sys_params.x0, Q, R, sys_params);
+    SystemModel model(sys_params.x0, Q, R);
 
-    // FilterParams ekf_params{};
-    // EKF filter(sys_params.x0, ekf_params);
-    // collector.SaveFilterSettings("test_run3", ekf_params);
+    EstimatorType filter_type = EstimatorType::EKF;
+    FilterParams filter_params{};
+    std::string sim_name;
+    std::unique_ptr<Estimator> filter;
 
-    FilterParams ukf_params{};
-    UKF filter(sys_params.x0, ukf_params, 1e-2, 2, 0);
-    collector.SaveFilterSettings("test_run2", ukf_params);
+    if (filter_type == EstimatorType::EKF) {
+        filter = std::make_unique<EKF>(sys_params.x0, filter_params);
+        sim_name = "ekf_run";
+        collector.SaveFilterSettings(sim_name, filter_params);
+    } else {
+        filter = std::make_unique<UKF>(sys_params.x0, filter_params, 0.01, 2.0, 0);
+        sim_name = "ukf_run";
+        collector.SaveFilterSettings(sim_name, filter_params);
+    }
+
+    std::cout << "[INFO] Beginning simulation..." << std::endl;
 
     double t = 0.0;
     for (size_t k = 0; k < max_steps; k++) {
+        // Simulate system model dynamics
         model.Propagate(t, sys_params.u0);
         model.CollectMeasurements();
-
         auto state = model.GetState();
         auto z = model.GetSensorMeasurement();
 
-        filter.Predict(t, sys_params.u0);
-        filter.Correct(z);
+        // Filter update
+        filter->Predict(t, sys_params.u0);
+        filter->Correct(z);
 
-        auto estimate = filter.GetEstimatedState();
-        auto residuals = filter.GetFilterResiduals();
-        auto covar_diag = filter.GetCovarDiagonal();
-
+        auto estimate = filter->GetEstimatedState();
+        auto residuals = filter->GetFilterResiduals();
+        auto covar_diag = filter->GetCovarDiagonal();
         collector.Record(t, state, z, estimate, residuals, covar_diag);
+
         t += DT;
     }
-
-    collector.Save("test_run2", EstimatorType::UKF);
+    std::cout << "[INFO] Simulation complete --> writing out results..." << std::endl;
+    collector.Save(sim_name, filter_type);
+    std::cout << "[INFO] Simulation results successfully written to disk" << std::endl;
 
     return 0;
 };
