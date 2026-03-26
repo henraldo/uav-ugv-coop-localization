@@ -1,4 +1,6 @@
 # UAV-UGV Cooperative Localization
+<img width="685" height="650" alt="uav_ugv_pic" src="https://github.com/user-attachments/assets/2c8d1fa4-3c16-48af-a03c-7bcd20950d8b" />
+
 This project generates a user-configurable simulation of cooperative localization between a UAV and UGV, using either an Extended Kalman Filter (EKF), or an Unscented Kalman Filter (UKF).
 
 Future releases will also provide the means to tune EKF or UKF performance and stability via Monte Carlo
