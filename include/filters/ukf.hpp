@@ -46,7 +46,7 @@ namespace uav_ugv_sim {
             Eigen::MatrixXd Svp = p_llt.matrixL();
 
             sp_x_.col(0) = xhat_;
-            for (int i = 0; i < L_; i++) {
+            for (int i = 0; i < n_; i++) {
                 sp_x_.col(i + 1) = xhat_ + (gamma * Svp.col(i));
                 sp_x_(2, i + 1) = WrapToPi(sp_x_(2, i + 1));
                 sp_x_(5, i + 1) = WrapToPi(sp_x_(5, i + 1));
@@ -114,6 +114,7 @@ namespace uav_ugv_sim {
             UKF::Propagate(t0, u);
             xhat_ = sp_x_ * weights_mean_;
 
+            P_.setZero();
             for (int i = 0; i < L_; i++) {
                 SystemState d_xx = sp_x_.col(i) - xhat_;
                 d_xx(2) = WrapToPi(d_xx(2));
@@ -132,7 +133,10 @@ namespace uav_ugv_sim {
                 sp_z.col(i) = UKF::SensorModel(sp_x_.col(i));
             }
 
-            ObservationState yhat_ = sp_z * weights_covar_;
+            ObservationState yhat_ = sp_z * weights_mean_;
+            yhat_(0) = WrapToPi(yhat_(0));
+            yhat_(2) = WrapToPi(yhat_(2));
+            
             ey_ = z - yhat_;
 
             ey_(0) = WrapToPi(ey_(0));

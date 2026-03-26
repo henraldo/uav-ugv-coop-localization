@@ -12,7 +12,7 @@ using namespace uav_ugv_sim;
 
 int main() {
 
-    const size_t max_steps = 100;
+    const size_t max_steps = 1000;
 
     TimeHistoryCollector collector;
     collector.Reserve(max_steps);
