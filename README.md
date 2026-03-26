@@ -188,8 +188,87 @@ $$\boldsymbol{K}_{k+1} = \boldsymbol{P}^{-}_{k+1} \boldsymbol{\tilde{H}}_{k+1}^{
 
 $$\boldsymbol{\hat{x}}^{+}_{k+1} = \boldsymbol{\hat{x}}^{-}_{k+1} + \boldsymbol{K}_{k+1} \boldsymbol{\tilde{e}_y}_{k+1}$$
 
+$$\boldsymbol{P}^{+}_{k+1} = (\boldsymbol{I} - \boldsymbol{K}_{k+1}\boldsymbol{\tilde{H}}_{k+1})\boldsymbol{P}^{-}_{k+1}$$
+
 
 ## Unscented Kalman Filter Overview
+The UKF is a fully nonlinear filter; formulated by applying an Unscented Transform to the model dynamics,
+since it is easier to directly approximate mean and covariance between pdf's than through the nonlinear state
+transition functions. Instead of using a Taylor Series expansion to linearize the model dynamics, sigma points
+are generated from the current state pdf $p(X_k \: | \: Y_{1:k})$ and propagated to the next time step through
+the nonlinear dynamics to approximate the first two moments of the pdf at the future time step.
+Where $2n \: + \: 1$ sigma points are required to accurately sketch out
+$\boldsymbol{E}[\boldsymbol{x}_k] = \boldsymbol{\mu}_x$ and $cov(\boldsymbol{x}_k) = \boldsymbol{P}_{xx}$
+from $\boldsymbol{x}_k \: \sim \: p(x_k | y_{1:k})$. Given that $\boldsymbol{P}_{xx} = \boldsymbol{S}^T \boldsymbol{S}$
+and $\boldsymbol{S} = chol(\boldsymbol{P}_{xx})$, sigma points are computed as:
+
+$$\boldsymbol{\chi}^0 = \boldsymbol{\mu}_x$$
+
+$$\boldsymbol{\chi}^i = \left\{
+    \begin{array}{ll}
+        \boldsymbol{\mu}_x + (\sqrt{n + \lambda}) \cdot \boldsymbol{S}^{j,T}, & \; for \: i = 1,...,n, \: and \: j = 1,...,n \\
+        \boldsymbol{\mu}_x - (\sqrt{n + \lambda}) \cdot \boldsymbol{S}^{j,T}, & \; for \: i = n+1,...,2n, \: and \: j = 1,...,n
+\end{array}
+\right.$$
+
+Where $n$ is the number of states in $\boldsymbol{x}_k$ and $\lambda$ is the scaling parameter defined by:
+
+$$\lambda = \alpha^2 \cdot (n + k) - n$$
+
+The propagated sigma points can then be recombined and used to estimate the new mean and covariance.
+The variable $\alpha$ controls the spread of the sigma points and as its magnitude is reduced, the estimate
+performance approaches that of the EKF.
+
+The UKF algorithm also incorporates a prediction step and measurement update/correction step.
+However, a nonlinear transformation will be performed at both steps - approximating the statistics using
+the generated sigma points. The prediction step is computed as follows, given initial values for
+$\boldsymbol{\hat{x}}^{+}_k$, $\boldsymbol{P}^{+}_k$, and $\boldsymbol{S}_k$:
+
+$$\boldsymbol{\chi}^0_k = \boldsymbol{\hat{x}}^{+}_k$$
+
+$$\boldsymbol{\chi}^i = \left\{
+    \begin{array}{ll}
+        \boldsymbol{\hat{x}}^{+}_k + (\sqrt{n + \lambda}) \cdot \boldsymbol{S}^{j,T}_k, & \; for \: i = 1,...,n, \: and \: j = 1,...,n \\
+        \boldsymbol{\hat{x}}^{+}_k - (\sqrt{n + \lambda}) \cdot \boldsymbol{S}^{j,T}_k, & \; for \: i = n+1,...,2n, \: and \: j = 1,...,n \\
+\end{array}\right.
+$$
+
+Then each of the sigma points at $t = t_k$ is propagated through the nonlinear dynamics function $\boldsymbol{f}$
+(again using the BOOST `odeint::runge_kutta_dopri5` solver) to generate predicted points
+$\boldsymbol{\chi}^{-0}_{k+1} \; and \; \boldsymbol{\chi}^{-i}_{k+1}$ at $t = t_{k+1}$. The prediction
+step is concluded by recombining the resultant points to compute the predicted mean and covariance by:
+
+$$\boldsymbol{\hat{x}}^-_{k+1} \approx \sum_{i=0}^{2n} \boldsymbol{\omega}^{i}_m \cdot \boldsymbol{\chi}^{-i}_{k+1}$$
+
+$$\boldsymbol{P}^-_{k+1} \approx \sum_{i=0}^{2n} \boldsymbol{\omega}^{i}_m \cdot (\boldsymbol{\chi}^{-i}_{k+1} - \boldsymbol{\hat{x}}^-_{k+1})(\boldsymbol{\chi}^{-i}_{k+1} - \boldsymbol{\hat{x}}^-_{k+1})^T + \boldsymbol{Q}$$
+
+where
+
+$$\omega^0_m = \frac{\lambda}{n + \lambda}$$
+
+$$\omega^0_c = \frac{\lambda}{n + \lambda} + 1 - \alpha^2 + \beta$$
+
+$$\omega^i_m = \frac{1}{2(n + \lambda)} = \omega^i_c$$
+
+The filter correction step has a form similar to the prediction step. Given $\boldsymbol{\hat{x}}^-_{k+1}$,
+$\boldsymbol{P}^-_{k+1}$, $\boldsymbol{\bar{S}}_{k+1}$, and observation $\boldsymbol{y}_{k+1}$, the correction
+step begins by generating another set of sigma points at measurement $k+1$ for the span of measurement estimates
+$(\boldsymbol{\gamma}^{0}_{k+1} \; and \; \boldsymbol{\gamma}^{i}_{k+1})$ by passing the state sigma points
+predicted at the previous step through the nonlinear sensor dynamics function $\boldsymbol{h}$ and applying
+the mean weights. The updated measurement mean and covariance are then computed by:
+
+$$\boldsymbol{\hat{y}}_{k+1} \approx \sum_{i=0}^{2n} \boldsymbol{\omega}^i_m \cdot \boldsymbol{\gamma}^{i}_{k+1}$$
+
+$$\boldsymbol{P_{yy}}_{k+1} \approx \sum_{i=0}^{2n} \boldsymbol{\omega}^{i}_m \cdot (\boldsymbol{\gamma}^{i}_{k+1} - \boldsymbol{\hat{y}}_{k+1})(\boldsymbol{\gamma}^{i}_{k+1} - \boldsymbol{\hat{y}}_{k+1})^T + \boldsymbol{R}$$
+
+Next, the state-measurement cross-covariance and Kalman gains are calculated in order to compute a corrected
+state estimate from the observation $\boldsymbol{y}_{k+1}$.
+
+$$\boldsymbol{P_{xy}}_{k+1} \approx \sum_{i=0}^{2n} \boldsymbol{\omega}^i_c \cdot (\boldsymbol{\chi}^{-i}_{k+1} - \boldsymbol{\hat{x}}^-_{k+1})(\boldsymbol{\gamma}^{i}_{k+1} - \boldsymbol{\hat{y}}_{k+1})^T$$
+
+$$\boldsymbol{K}_{k+1} \approx \boldsymbol{P_{xy}}_{k+1} \cdot [\boldsymbol{P_{yy}}_{k+1}]^{-1}$$
+
+$$\boldsymbol{\hat{x}}^+_{k+1} = \boldsymbol{\hat{x}}^-_{k+1} + \boldsymbol{K}_{k+1} \boldsymbol{P_{yy}}_{k+1} \boldsymbol{K}^T_{k+1} = \boldsymbol{P}^-_{k+1} - \boldsymbol{P_{xy}}_{k+1} [\boldsymbol{P_{yy}}_{k+1}]^{-1} \boldsymbol{P_{xy}}^{T}_{k+1}$$
 
 
 # Project Build
