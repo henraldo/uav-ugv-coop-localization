@@ -1,6 +1,7 @@
 # UAV-UGV Cooperative Localization
-This project generates a user-configurable simulation of cooperative localization between a UAV and UGV, using either an Extended Kalman Filter (EKF), or an Unscented Kalman Filter (UKF). The project
-can also be used as a testbed for EKF or UKF performance and stability tuning via user-selectable
+This project generates a user-configurable simulation of cooperative localization between a UAV and UGV, using either an Extended Kalman Filter (EKF), or an Unscented Kalman Filter (UKF).
+
+Future releases will also provide the means to tune EKF or UKF performance and stability via Monte Carlo
 Truth Model Testing (TMT) - where Monte Carlo trials are run to collect NEES and NIS statistics for assessing dynamic performance of the implemented filter.
 
 Time history data generated from the simulation (along with filter implementation settings) are written to CSV files and placed in a user-defined subdirectory under `/project-root/simulation_output/` for post-processing and analysis.
@@ -208,7 +209,10 @@ If GCC is not your default compiler:
 cmake -B build -S . -G Ninja -DCMAKE_CXX_COMPILER=$(which g++-15) -DCMAKE_C_COMPILER=$(which gcc-15) -DCMAKE_BUILD_TYPE=Release
 ```
 
-Once generation of the build files has completed, run the following command to generate the executable:
+Once generation of the build files has completed, update the `main()` function in `/src/main.cpp`
+to configure the filter type you'd like to implement as well as your initial filter, process noise,
+and measurement noise covariance diagonals (see `EstimatorType` and `FilterParams`). Then run the
+following command to generate the executable:
 ```bash
 cmake --build build
 ```
