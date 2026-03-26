@@ -156,20 +156,18 @@ $$\boldsymbol{\tilde{A}} = \begin{bmatrix}
 \end{bmatrix}_{(x_{k},u_{k})}$$
 
 Next, after a new set of observations are received at measurement $k+1$, the filter's correction
-stage corrects the predicted state estimate and covariance to render a final new state estimate $\boldsymbol{\hat{x}}^{+}_{k+1}$ . The correction stage begins by calculating an updated discrete-time observation matrix Jacobian
+stage corrects the predicted state estimate and covariance to render a final new state estimate
+$\boldsymbol{\hat{x}}^{+}_{k+1}$ . The correction stage begins by calculating an updated discrete-time
+observation matrix Jacobian
 $\boldsymbol{\tilde{H}}_{k+1} = \frac{\partial\boldsymbol{h}}{\partial\boldsymbol{x}} |_{\hat{x}^{-}_{k+1}}$
 which is computed to be
 
 $$\boldsymbol{\tilde{H}}_{k+1} = \begin{bmatrix}
     \frac{x_5 - x_2}{(\frac{(x_5 - x_2)^2}{(x_4-x_1)^2}+1) (x_4 - x_1)^2} & -\frac{1}{(x_4-x_1)(\frac{(x_5-x_2)^2}{(x_4-x_1)^2} + 1)} & -1 & -\frac{x_5-x_2}{(x_4-x_1)^2(\frac{(x_5-x_2)^2}{(x_4-x_1)^2} + 1)} & \frac{1}{(x_4-x_1)(\frac{(x_5-x_2)^2}{(x_4-x_1)^2} + 1)} & 0 \\
-
     \frac{x_1 - x_4}{\sqrt{(x_1-x_4)^2 + (x_2-x_5)^2}} & \frac{x_2 - x_5}{\sqrt{(x_1-x_4)^2 + (x_2-x_5)^2}} & 0 & \frac{x_4 - x_1}{\sqrt{(x_1-x_4)^2 + (x_2-x_5)^2}} & \frac{x_5 - x_2}{\sqrt{(x_1-x_4)^2 + (x_2-x_5)^2}} & 0 \\
-
     -\frac{x_2-x_5}{(x_1-x_4)^2(\frac{(x_2-x_5)^2}{(x_1-x_4)^2} + 1)} & \frac{1}{(x_1-x_4)(\frac{(x_2-x_5)^2}{(x_1-x_4)^2} + 1)} & 0 & \frac{x_2 - x_5}{(\frac{(x_2 - x_5)^2}{(x_1-x_4)^2}+1) (x_1 - x_4)^2} & -\frac{1}{(x_1-x_4)(\frac{(x_2-x_5)^2}{(x_1-x_4)^2} + 1)} & -1 \\
-
     0 & 0 & 0 & 1 & 0 & 0 \\
     0 & 0 & 0 & 0 & 1 & 0 \\
-
 \end{bmatrix}_{\hat{x}^{-}_{k+1}}$$
 
 and the observation estimate for measurement $k+1$ is
@@ -196,9 +194,8 @@ The UKF is a fully nonlinear filter; formulated by applying an Unscented Transfo
 since it is easier to directly approximate mean and covariance between pdf's than through the nonlinear state
 transition functions. Instead of using a Taylor Series expansion to linearize the model dynamics, sigma points
 are generated from the current state pdf $p(X_k \: | \: Y_{1:k})$ and propagated to the next time step through
-the nonlinear dynamics to approximate the first two moments of the pdf at the future time step.
-Where $2n \: + \: 1$ sigma points are required to accurately sketch out
-$\boldsymbol{E}[\boldsymbol{x}_k] = \boldsymbol{\mu}_x$ and $cov(\boldsymbol{x}_k) = \boldsymbol{P}_{xx}$
+the nonlinear dynamics to approximate the first two moments of the pdf at the future time step. Where
+$2n \: + \: 1$ sigma points are required to accurately sketch out $\boldsymbol{E}[\boldsymbol{x}_k] = \boldsymbol{\mu}_x$ and $cov(\boldsymbol{x}_k) = \boldsymbol{P}_{xx}$
 from $\boldsymbol{x}_k \: \sim \: p(x_k | y_{1:k})$. Given that $\boldsymbol{P}_{xx} = \boldsymbol{S}^T \boldsymbol{S}$
 and $\boldsymbol{S} = chol(\boldsymbol{P}_{xx})$, sigma points are computed as:
 
@@ -221,8 +218,7 @@ performance approaches that of the EKF.
 
 The UKF algorithm also incorporates a prediction step and measurement update/correction step.
 However, a nonlinear transformation will be performed at both steps - approximating the statistics using
-the generated sigma points. The prediction step is computed as follows, given initial values for
-$\boldsymbol{\hat{x}}^{+}_k$, $\boldsymbol{P}^{+}_k$, and $\boldsymbol{S}_k$:
+the generated sigma points. The prediction step is computed as follows, given initial values for $\boldsymbol{\hat{x}}^{+}_k$, $\boldsymbol{P}^{+}_k$, and $\boldsymbol{S}_k$:
 
 $$\boldsymbol{\chi}^0_k = \boldsymbol{\hat{x}}^{+}_k$$
 
@@ -234,9 +230,8 @@ $$\boldsymbol{\chi}^i = \left\{
 $$
 
 Then each of the sigma points at $t = t_k$ is propagated through the nonlinear dynamics function $\boldsymbol{f}$
-(again using the BOOST `odeint::runge_kutta_dopri5` solver) to generate predicted points
-$\boldsymbol{\chi}^{-0}_{k+1} \; and \; \boldsymbol{\chi}^{-i}_{k+1}$ at $t = t_{k+1}$. The prediction
-step is concluded by recombining the resultant points to compute the predicted mean and covariance by:
+(again using the BOOST `odeint::runge_kutta_dopri5` solver) to generate predicted points $\boldsymbol{\chi}^{-0}_{k+1} \; and \; \boldsymbol{\chi}^{-i}_{k+1}$ at $t = t_{k+1}$.
+The prediction step is concluded by recombining the resultant points to compute the predicted mean and covariance by:
 
 $$\boldsymbol{\hat{x}}^-_{k+1} \approx \sum_{i=0}^{2n} \boldsymbol{\omega}^{i}_m \cdot \boldsymbol{\chi}^{-i}_{k+1}$$
 
@@ -250,8 +245,7 @@ $$\omega^0_c = \frac{\lambda}{n + \lambda} + 1 - \alpha^2 + \beta$$
 
 $$\omega^i_m = \frac{1}{2(n + \lambda)} = \omega^i_c$$
 
-The filter correction step has a form similar to the prediction step. Given $\boldsymbol{\hat{x}}^-_{k+1}$,
-$\boldsymbol{P}^-_{k+1}$, $\boldsymbol{\bar{S}}_{k+1}$, and observation $\boldsymbol{y}_{k+1}$, the correction
+The filter correction step has a form similar to the prediction step. Given $\boldsymbol{\hat{x}}^-_{k+1}$, $\boldsymbol{P}^-_{k+1}$, $\boldsymbol{\bar{S}}_{k+1}$, and observation $\boldsymbol{y}_{k+1}$, the correction
 step begins by generating another set of sigma points at measurement $k+1$ for the span of measurement estimates
 $(\boldsymbol{\gamma}^{0}_{k+1} \; and \; \boldsymbol{\gamma}^{i}_{k+1})$ by passing the state sigma points
 predicted at the previous step through the nonlinear sensor dynamics function $\boldsymbol{h}$ and applying
