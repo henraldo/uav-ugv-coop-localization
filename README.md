@@ -126,14 +126,17 @@ $$\boldsymbol{y}(t) = \begin{bmatrix}
 
 ## Extended Kalman Filter Overview
 The online nonlinear trajectory for the filter is updated at each time step, as part of the prediction
-stage and the nonlinear dynamics model is propagated forward using BOOST's `odeint::runge_kutta_dopri5`
-ODE solver. A new state estimate $\boldsymbol{\hat{x}}^{-}_{k+1} = \boldsymbol{f}(\boldsymbol{\hat{x}}^{+}_k , \boldsymbol{u}_k , \boldsymbol{w}_k = 0)$ is predicted by propagating the dynamics
-model and the new filter covariance $\boldsymbol{P}^{-}_{k+1}$ is predicted as
+stage and the nonlinear dynamics model is propagated forward using BOOST's `odeint::runge_kutta_dopri5` ODE solver. 
+A new state estimate 
+
+ $$\boldsymbol{\hat{x}}^{-}_{k+1} = \boldsymbol{f}(\boldsymbol{\hat{x}}^{+}_k , \boldsymbol{u}_k , \boldsymbol{w}_k = 0)$$
+
+is predicted by propagating the dynamics model and the new filter covariance $\boldsymbol{P}^{-}_{k+1}$ is predicted as
 
 $$\boldsymbol{P}^{-}_{k+1} = \boldsymbol{\tilde{F}}_k \boldsymbol{P}^{+}_k \boldsymbol{\tilde{F}}^{T}_k + \boldsymbol{\tilde{\Omega}}_k \boldsymbol{Q} \boldsymbol{\tilde{\Omega}}^{T}_k$$
 
-where $\boldsymbol{\tilde{F}}_k$ is the discrete-time mapping of the Jacobian of the state transition
-matrix at time $t_k$. This is updated prior to the new covariance prediction as
+where $\boldsymbol{\tilde{F}}_k$ is the discrete-time mapping of the state transition matrix Jacobian
+at time $t_k$. This is updated prior to the new covariance prediction as
 
 $$\boldsymbol{\tilde{F}}_k \big|_{\hat{x}^{+}_k, u_k, w_k = 0} = \boldsymbol{I} + \Delta t \cdot \boldsymbol{\tilde{A}} \big|_{(\hat{x}^{+}_k, u(t_k),w(t_k)=0)}$$
 
@@ -149,10 +152,14 @@ $$\boldsymbol{\tilde{A}} = \begin{bmatrix}
 \end{bmatrix}_{(x_k,u_k)}$$
 
 Next, after a new set of observations are received at measurement $k+1$, the filter's correction
-stage corrects the predicted state estimate and covariance to render a final new state estimate
-$\boldsymbol{\hat{x}}^{+}_{k+1}$. The correction stage begins by calculating an updated discrete-time
-observation matrix Jacobian
-$\boldsymbol{\tilde{H}}_{k+1} = \frac{\partial \boldsymbol{h}}{\partial \boldsymbol{x}} \big|_{\hat{x}^{-}_{k+1}}$
+stage corrects the predicted state estimate and covariance to render a final new state estimate 
+
+$$\boldsymbol{\hat{x}}^{+}_{k+1}$$ 
+
+The correction stage begins by calculating an updated discrete-time observation matrix Jacobian
+
+$$\boldsymbol{\tilde{H}}_{k+1} = \frac{\partial \boldsymbol{h}}{\partial \boldsymbol{x}} \big|_{\hat{x}^{-}_{k+1}}$$
+
 which is computed to be
 
 $$\boldsymbol{\tilde{H}}_{k+1} = \begin{bmatrix}
@@ -169,15 +176,15 @@ $$\boldsymbol{\hat{y}}_{k+1} = \boldsymbol{h}(\boldsymbol{\hat{x}}^{-}_{k+1})$$
 
 The measurement and covariance innovations are then calculated as
 
-$$\boldsymbol{\tilde{e}}_y_{k+1} = \boldsymbol{y}_{k+1} - \boldsymbol{\hat{y}}_{k+1}$$
+$$\boldsymbol{\tilde{e}}_{y, k+1} = \boldsymbol{y}_{k+1} - \boldsymbol{\hat{y}}_{k+1}$$
 
-$$\boldsymbol{S}_{k+1} = \boldsymbol{\tilde{H}}_{k+1} \boldsymbol{P}^{-}_{k+1} \boldsymbol{\tilde{H}}^{T}_{k+1} + \boldsymbol{R}_{k+1}$$
+$$\boldsymbol{S}_{k+1} = \boldsymbol{\tilde{H}}_{k+1} \boldsymbol{P}^{-}_{k+1} \boldsymbol{\tilde{H}}^{T}_{k+1} + \boldsymbol{R}$$
 
 Finally, the Kalman Gain is updated, and the state estimate and filter covariance for measurement step $k+1$ are corrected as follows:
 
 $$\boldsymbol{K}_{k+1} = \boldsymbol{P}^{-}_{k+1} \boldsymbol{\tilde{H}}_{k+1}^{T} \boldsymbol{S}_{k+1}^{-1}$$
 
-$$\boldsymbol{\hat{x}}^{+}_{k+1} = \boldsymbol{\hat{x}}^{-}_{k+1} + \boldsymbol{K}_{k+1} \boldsymbol{\tilde{e}}_y_{k+1}$$
+$$\boldsymbol{\hat{x}}^{+}_{k+1} = \boldsymbol{\hat{x}}^{-}_{k+1} + \boldsymbol{K}_{k+1} \boldsymbol{\tilde{e}}_{y, k+1}$$
 
 $$\boldsymbol{P}^{+}_{k+1} = (\boldsymbol{I} - \boldsymbol{K}_{k+1}\boldsymbol{\tilde{H}}_{k+1})\boldsymbol{P}^{-}_{k+1}$$
 
