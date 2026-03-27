@@ -192,11 +192,24 @@ $$\boldsymbol{P}^{+}_{k+1} = (\boldsymbol{I} - \boldsymbol{K}_{k+1}\boldsymbol{\
 The UKF is a fully nonlinear filter; formulated by applying an Unscented Transform to the model dynamics,
 since it is easier to directly approximate mean and covariance between pdf's than through the nonlinear state
 transition functions. Instead of using a Taylor Series expansion to linearize the model dynamics, sigma points
-are generated from the current state pdf $p(\boldsymbol{x}_k \mid \boldsymbol{y}_{1:k})$ and propagated to the next time step through
-the nonlinear dynamics to approximate the first two moments of the pdf at the future time step. Where
-$2n + 1$ sigma points are required to accurately sketch out $\boldsymbol{E}[\boldsymbol{x}_k] = \boldsymbol{\mu}_x$ and $\mathrm{cov}(\boldsymbol{x}_k) = \boldsymbol{P}_{xx}$
-from $\boldsymbol{x}_k \sim p(\boldsymbol{x}_k \mid \boldsymbol{y}_{1:k})$. Given that $\boldsymbol{P}_{xx} = \boldsymbol{S}^T \boldsymbol{S}$
-and $\boldsymbol{S} = \mathrm{chol}(\boldsymbol{P}_{xx})$, sigma points are computed as:
+are generated from the current state pdf 
+
+$$p(\boldsymbol{x}_k \mid \boldsymbol{y}_{1:k})$$
+
+and propagated to the next time step through the nonlinear dynamics to approximate the first two moments of the pdf 
+at the future time step. Where $2n + 1$ sigma points are required to accurately sketch out
+
+$$\boldsymbol{E}[\boldsymbol{x}_k] = \boldsymbol{\mu}_x \quad and \quad \mathrm{cov}(\boldsymbol{x}_k) = \boldsymbol{P}_{xx}$$
+
+from 
+
+$$\boldsymbol{x}_k \sim p(\boldsymbol{x}_k \mid \boldsymbol{y}_{1:k})$$ 
+
+Given that 
+
+$$\boldsymbol{P}_{xx} = \boldsymbol{S}^T \boldsymbol{S} \quad and \quad \boldsymbol{S} = \mathrm{chol}(\boldsymbol{P}_{xx})$$ 
+
+sigma points are computed as:
 
 $$\boldsymbol{\chi}^0 = \boldsymbol{\mu}_x$$
 
@@ -225,7 +238,10 @@ $$\boldsymbol{\chi}^i_k = \begin{cases}
 \end{cases}$$
 
 Then each of the sigma points at $t = t_k$ is propagated through the nonlinear dynamics function $\boldsymbol{f}$
-(again using the BOOST `odeint::runge_kutta_dopri5` solver) to generate predicted points $\boldsymbol{\chi}^{-i}_{k+1}$ at $t = t_{k+1}$.
+(again using the BOOST `odeint::runge_kutta_dopri5` solver) to generate predicted points 
+
+$$\boldsymbol{\chi}^{-i}_{k+1} \quad at \quad t = t_{k+1}$$
+
 The prediction step is concluded by recombining the resultant points to compute the predicted mean and covariance by:
 
 $$\boldsymbol{\hat{x}}^-_{k+1} \approx \sum_{i=0}^{2n} \omega^i_m \cdot \boldsymbol{\chi}^{-i}_{k+1}$$
@@ -236,9 +252,12 @@ where
 
 $$\omega^0_m = \frac{\lambda}{n + \lambda}, \quad \omega^0_c = \frac{\lambda}{n + \lambda} + 1 - \alpha^2 + \beta, \quad \omega^i_m = \omega^i_c = \frac{1}{2(n + \lambda)}$$
 
-The filter correction step has a form similar to the prediction step. Given $\boldsymbol{\hat{x}}^-_{k+1}$, $\boldsymbol{P}^-_{k+1}$, and observation $\boldsymbol{y}_{k+1}$, the correction
-step begins by generating another set of sigma points at measurement $k+1$ for the span of measurement estimates
-$\boldsymbol{\gamma}^i_{k+1}$ by passing the predicted state sigma points through the nonlinear sensor dynamics function $\boldsymbol{h}$.
+The filter correction step has a form similar to the prediction step. Given 
+
+$$\boldsymbol{\hat{x}}^-_{k+1}, \quad \boldsymbol{P}^-_{k+1}, \quad and \quad observation \quad \boldsymbol{y}_{k+1}$$ 
+
+the correction step begins by generating another set of sigma points at measurement $k+1$ for the span of measurement 
+estimates $\boldsymbol{\gamma}^i_{k+1}$ by passing the predicted state sigma points through the nonlinear sensor dynamics function $\boldsymbol{h}$.
 
 The updated measurement mean and covariance are then computed by:
 
@@ -268,6 +287,7 @@ Clone down the project from Github and navigate to the project root in your term
 run the following command (omit `-G Ninja` if desired):
 ```bash
 cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=Release
+```
 
 ## Building
 Clone down the project from Github and navigate to the project root in your terminal of choice. Next,
