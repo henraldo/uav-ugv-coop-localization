@@ -25,8 +25,15 @@ int main() {
     SystemParams sys_params{};
     SystemModel model(sys_params.x0, Q, R);
 
+    // Set estimator type to implement
     EstimatorType filter_type = EstimatorType::EKF;
-    FilterParams filter_params{};
+
+    // Define covariance traces for estimator (sample values here - update as desired)
+    StateCov P_0 = Eigen::Matrix<double, 6, 1>(5.0, 5.0, 20.0, 5.0, 5.0, 20.0).asDiagonal();
+    StateCov Q_est = Q;
+    MeasCov R_est = R;
+
+    FilterParams filter_params(P_0, Q_est, R_est);
     std::string sim_name;
     std::unique_ptr<Estimator> filter;
 
@@ -35,7 +42,7 @@ int main() {
         sim_name = "ekf_run";
         collector.SaveFilterSettings(sim_name, filter_params);
     } else {
-        filter = std::make_unique<UKF>(sys_params.x0, filter_params, 0.01, 2.0, 0);
+        filter = std::make_unique<UKF>(sys_params.x0, filter_params, 0.01, 2.0, 0); // <-- update alpha, beta, kappa to your desired values if UKF selected
         sim_name = "ukf_run";
         collector.SaveFilterSettings(sim_name, filter_params);
     }

@@ -17,7 +17,7 @@ namespace uav_ugv_sim {
     }
 
     struct FilterParams {
-        StateCov P0 = Eigen::Matrix<double, 6, 1>(5.0, 5.0, 2.0, 20.0, 20.0, 2.0).asDiagonal();
+        StateCov P0 = Eigen::Matrix<double, 6, 1>(5.0, 5.0, 20.0, 5.0, 5.0, 20.0).asDiagonal();
         StateCov Q = Q_TRUE;
         MeasCov R = R_TRUE;
         StateCov Omega = StateCov::Identity() * DT;
