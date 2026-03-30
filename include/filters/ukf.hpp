@@ -57,18 +57,6 @@ namespace uav_ugv_sim {
             }
         }
 
-        // Generates measurements for fully nonlinear measurement model
-        auto SensorModel(const SystemState& x) const -> ObservationState {
-            ObservationState z;
-            z(0) = WrapToPi(std::atan2(x(4) - x(1), x(3) - x(0)) - x(2));
-            z(1) = std::sqrt(std::pow(x(0) - x(3), 2) + std::pow(x(1) - x(4), 2));
-            z(2) = WrapToPi(std::atan2(x(1) - x(4), x(0) - x(3)) - x(5));
-            z(3) = x(3);
-            z(4) = x(4);
-
-            return z;
-        }
-
     public:
         UKF(
             const SystemState& x0,

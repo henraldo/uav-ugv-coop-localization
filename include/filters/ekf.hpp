@@ -44,7 +44,7 @@ namespace uav_ugv_sim {
         // Corrects state and covariance predictions from latest observations
         void Correct(const ObservationState& z) override {
             auto H = EKF::MeasurmentModel(xhat_);
-            ey_ = z - (H * xhat_);
+            ey_ = z - (EKF::SensorModel(xhat_));
 
             ey_(0) = WrapToPi(ey_(0));
             ey_(2) = WrapToPi(ey_(2));

@@ -52,6 +52,8 @@ namespace uav_ugv_sim {
 
             auto MeasurmentModel(const SystemState& xhat) const -> ObsSensativity;
 
+            auto SensorModel(const SystemState& xhat) const -> ObservationState;
+
         public:
             virtual ~Estimator();
 
