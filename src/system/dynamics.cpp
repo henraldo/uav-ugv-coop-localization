@@ -3,8 +3,6 @@
 #include "system/dynamics.hpp"
 #include <boost/numeric/odeint.hpp>
 #include <boost/numeric/odeint/external/eigen/eigen.hpp>
-#include <Eigen/Core>
-#include <Eigen/Dense>
 #include <stdexcept>
 
 namespace uav_ugv_sim {
@@ -15,6 +13,8 @@ namespace uav_ugv_sim {
     // Constructor Implementation for SystemModel
     SystemModel::SystemModel(const SystemState& x0, const StateCov& Q, const MeasCov& R)
         : x_(x0), Q_(Q), R_(R), gen_(std::random_device{}()) {
+
+        y_ = SensorModel(x_);
 
         // Compute Discrete-Time Cholesky decomps of Q and R for process and meas noise generation
         auto Q_dt = Q * DT;
@@ -33,52 +33,62 @@ namespace uav_ugv_sim {
         Svy_ = r_llt.matrixL();
     }
 
-    // Propagate nonlinear system dynamics model
-    void SystemModel::Propagate(double t0, const ControlInput& u, bool add_noise) {
+    // Sensor model h(x) -> y = [ heading_ugv, range, heading_uav, ξa, ηa ]^T
+    // Generates measurements for fully nonlinear measurement model
+    auto SystemModel::SensorModel(const SystemState& x) const -> ObservationState {
+        ObservationState z;
+        auto dx = x(3) - x(0);
+        auto dy = x(4) - x(1);
+        double heading_ugv = WrapToPi(std::atan2(dy, dx) - x(2));
+        double heading_uav = WrapToPi(std::atan2(-dy, -dx) - x(5));
+        double range = std::sqrt((dx * dx) + (dy * dy));
+
+        z(0) = heading_ugv;
+        z(1) = range;
+        z(2) = heading_uav;
+        z(3) = x(3);
+        z(4) = x(4);
+
+        return z;
+    }
+
+    std::tuple<std::vector<double>, Eigen::MatrixXd, Eigen::MatrixXd> SystemModel::GenerateGroundTruthData(double sim_time_seconds, ControlInput& u) {
         DynamicsModel dyn(u);
 
-        // Suppress false positive uninitialized warnings from ODEINT/Eigen copies
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wuninitialized"
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-        boost::numeric::odeint::runge_kutta_dopri5<SystemState> stepper;
-        boost::numeric::odeint::integrate_adaptive(
-            boost::numeric::odeint::make_controlled(1e-6, 1e-6, stepper), dyn, x_, t0, DT, DT / 10.0);
-#pragma GCC diagnostic pop
+        std::vector<double> times;
+        std::vector<SystemState> states;
+        TrajectoryObserver obs(times, states);
 
-        if (add_noise) {
-            SystemState noise;
+        // Suppress false positive uninitialized warnings from ODEINT/Eigen copies
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wuninitialized"
+        #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+        boost::numeric::odeint::integrate_const(
+            boost::numeric::odeint::runge_kutta4<SystemState>{}, dyn, x_, 0.0, sim_time_seconds, DT, obs);
+        #pragma GCC diagnostic pop
+
+        const size_t n_steps = times.size();
+        Eigen::MatrixXd x_truth(6, n_steps);
+        Eigen::MatrixXd y_truth(5, n_steps);
+
+        for (size_t i = 0; i < n_steps; i++) {
+            SystemState proc_noise;
+            ObservationState meas_noise;
             std::normal_distribution<double> norm_dist(0.0, 1.0);
-            for (int i = 0; i < noise.rows(); i++) {
-                noise(i, 0) = norm_dist(gen_);
+
+            for (int j = 0; j < proc_noise.rows(); j++) {
+                proc_noise(j, 0) = norm_dist(gen_);
+            }
+            for (int k = 0; k < meas_noise.rows(); k++) {
+                meas_noise(k, 0) = norm_dist(gen_);
             }
 
-            x_ += Svx_ * noise;
+            x_truth.col(i) = states[i] + (Svx_.transpose() * proc_noise);
+            y_truth.col(i) = SensorModel(states[i]) + (Svy_.transpose() * meas_noise);
+
         }
 
-        // ensure UGV and UAV headings are wrapped to [-pi, pi]
-        x_(2) = WrapToPi(x_(2));
-        x_(5) = WrapToPi(x_(5));
+        return {times, x_truth, y_truth};
     }
-
-    void SystemModel::CollectMeasurements() {
-        y_(0) = WrapToPi(std::atan2(x_(4) - x_(1), x_(3) - x_(0)) - x_(2));
-        y_(1) = std::sqrt(std::pow(x_(0) - x_(3), 2) + std::pow(x_(1) - x_(4), 2));
-        y_(2) = WrapToPi(std::atan2(x_(1) - x_(4), x_(0) - x_(3)) - x_(5));
-        y_(3) = x_(3);
-        y_(4) = x_(4);
-
-        ObservationState noise;
-        std::normal_distribution<double> norm_dist(0.0, 1.0);
-        for (int i = 0; i < noise.rows(); i++) {
-            noise(i, 0) = norm_dist(gen_);
-        }
-
-        y_ += Svy_ * noise;
-    }
-
-    // Getter implementations
-    const SystemState& SystemModel::GetState() const { return x_; }
-    const ObservationState& SystemModel::GetSensorMeasurement() const { return y_; };
 
 }

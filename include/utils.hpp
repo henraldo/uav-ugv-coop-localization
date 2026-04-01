@@ -16,12 +16,6 @@ namespace uav_ugv_sim
         return std::fmod(std::fmod(angle + PI, tau) + tau, tau) - PI;
     };
 
-    inline double WrapTo2Pi(double angle)
-    {
-        const double tau = 2 * PI;
-        return std::fmod(std::fmod(angle, tau) + tau, tau);
-    };
-
     template <typename T = double>
     constexpr T sec(T theta) noexcept
     {
@@ -36,14 +30,13 @@ namespace uav_ugv_sim
     };
 
     // ODE integration functor: defines dx/dt = f(x, u) for combined system
-    struct DynamicsModel
-    {
-        const ControlInput &u;
-        const double &L;
+    struct DynamicsModel {
+        const ControlInput& u;
+        const double& L;
 
-        DynamicsModel(const ControlInput &control_vec, const double &l = UGV_L) : u(control_vec), L(l) {}
+        DynamicsModel(const ControlInput& control_vec, const double& l = UGV_L) : u(control_vec), L(l) {}
 
-        void operator()(const SystemState &x, SystemState &dxdt, double) const
+        void operator()(const SystemState& x, SystemState& dxdt, double) const
         {
             dxdt(0) = u(0) * std::cos(x(2));
             dxdt(1) = u(0) * std::sin(x(2));

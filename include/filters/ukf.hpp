@@ -84,9 +84,9 @@ namespace uav_ugv_sim {
             for (int i = 0; i < L_; i++) {
                 SystemState x = sp_x_.col(i);
 
-                boost::numeric::odeint::runge_kutta_dopri5<SystemState> stepper;
-                boost::numeric::odeint::integrate_adaptive(
-                    boost::numeric::odeint::make_controlled(1e-6, 1e-6, stepper), dyn, x, t0, DT, DT / 10.0);
+                boost::numeric::odeint::integrate_const(
+                    boost::numeric::odeint::runge_kutta4<SystemState>{}, dyn, x, t0, t0 + DT, DT
+                );
 
                 x(2) = WrapToPi(x(2));
                 x(5) = WrapToPi(x(5));
@@ -101,6 +101,8 @@ namespace uav_ugv_sim {
 
             UKF::Propagate(t0, u);
             xhat_ = sp_x_ * weights_mean_;
+            xhat_(2) = WrapToPi(xhat_(2));
+            xhat_(5) = WrapToPi(xhat_(5));
 
             P_.setZero();
             for (int i = 0; i < L_; i++) {
@@ -109,7 +111,7 @@ namespace uav_ugv_sim {
                 d_xx(5) = WrapToPi(d_xx(5));
                 P_ += weights_covar_(i) * (d_xx * d_xx.transpose());
             }
-            P_ += params_.Q;
+            P_ += params_.Q * DT;
         }
 
         // Corrects state and covariance predictions from latest observations
@@ -124,7 +126,7 @@ namespace uav_ugv_sim {
             ObservationState yhat_ = sp_z * weights_mean_;
             yhat_(0) = WrapToPi(yhat_(0));
             yhat_(2) = WrapToPi(yhat_(2));
-            
+
             ey_ = z - yhat_;
 
             ey_(0) = WrapToPi(ey_(0));
@@ -137,7 +139,7 @@ namespace uav_ugv_sim {
                 d_yy(2) = WrapToPi(d_yy(2));
                 Pyy += weights_covar_(i) * (d_yy * d_yy.transpose());
             }
-            Pyy += params_.R;
+            Pyy += params_.R * DT;
 
             Eigen::MatrixXd Pxy(n_, m);
             Pxy.setZero();

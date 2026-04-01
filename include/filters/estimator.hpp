@@ -50,7 +50,7 @@ namespace uav_ugv_sim {
 
             auto ComputeJacobianG(const SystemState& xhat, const ControlInput& u, double dt) const -> ControlMatrix;
 
-            auto MeasurmentModel(const SystemState& xhat) const -> ObsSensativity;
+            auto ComputeJacobianH(const SystemState& xhat) const -> ObsSensativity;
 
             auto SensorModel(const SystemState& xhat) const -> ObservationState;
 
