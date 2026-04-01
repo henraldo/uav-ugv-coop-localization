@@ -24,9 +24,10 @@ namespace uav_ugv_sim {
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wuninitialized"
     #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-            boost::numeric::odeint::runge_kutta_dopri5<SystemState> stepper;
-            boost::numeric::odeint::integrate_adaptive(
-                boost::numeric::odeint::make_controlled(1e-6, 1e-6, stepper), dyn, xhat_, t0, DT, DT / 10.0);
+            // boost::numeric::odeint::runge_kutta_dopri5<SystemState> stepper;
+            boost::numeric::odeint::integrate_const(
+                boost::numeric::odeint::runge_kutta4<SystemState>{}, dyn, xhat_, t0, t0 + DT, DT
+            );
     #pragma GCC diagnostic pop
 
             // ensure UGV and UAV headings are wrapped to [-pi, pi]
@@ -38,18 +39,18 @@ namespace uav_ugv_sim {
         void Predict(double t0, const ControlInput& u) override {
             EKF::Propagate(t0, u);
             auto F = EKF::ComputeJacobianF(xhat_, u, DT);
-            P_ = F * P_ * F.transpose() + (params_.Omega * params_.Q * params_.Omega.transpose());
+            P_ = F * P_ * F.transpose() + (params_.Q * DT);
         }
 
         // Corrects state and covariance predictions from latest observations
         void Correct(const ObservationState& z) override {
-            auto H = EKF::MeasurmentModel(xhat_);
-            ey_ = z - (H * xhat_);
+            auto H = EKF::ComputeJacobianH(xhat_);
+            ey_ = z - (EKF::SensorModel(xhat_));
 
             ey_(0) = WrapToPi(ey_(0));
             ey_(2) = WrapToPi(ey_(2));
 
-            auto S = H * P_ * H.transpose() + params_.R;
+            auto S = H * P_ * H.transpose() + params_.R * DT;
             auto K = P_ * H.transpose() * S.inverse();
 
             xhat_ += K * ey_;

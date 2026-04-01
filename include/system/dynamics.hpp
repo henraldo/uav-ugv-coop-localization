@@ -3,39 +3,59 @@
 #include "../constants.hpp"
 #include "../utils.hpp"
 #include <random>
+#include <vector>
+#include <tuple>
+
 
 namespace uav_ugv_sim {
 
-struct SystemParams {
-    SystemState x0 = SystemState(10.0, 0.0, PI / 2.0, -60.0, 0.0, -PI / 2.0);
-    ControlInput u0 = ControlInput(2.0, -PI / 18, 12.0, PI / 25.0);
+    struct TrajectoryObserver {
+        std::vector<double>& times;
+        std::vector<SystemState>& states;
 
-    SystemParams() = default;
+        TrajectoryObserver(
+            std::vector<double>& t,
+            std::vector<SystemState>& s
+        ) : times(t), states(s) {}
 
-    explicit SystemParams(const SystemState& x_initial, const ControlInput& u_initial);
-};
+        void operator()(const SystemState& x, double t) const {
+            SystemState x_wrapped;
+            x_wrapped = x;
+            x_wrapped(2) = WrapToPi(x_wrapped(2));
+            x_wrapped(5) = WrapToPi(x_wrapped(5));
 
-class SystemModel {
-    private:
-        SystemState x_;
-        ObservationState y_;
-        StateCov Q_;
-        StateCov Svx_;
-        MeasCov R_;
-        MeasCov Svy_;
+            times.push_back(t);
+            states.push_back(x_wrapped);
+        }
+    };
 
-        std::mt19937 gen_;
+    struct SystemParams {
+        SystemState x0 = SystemState(10.0, 0.0, PI / 2.0, -60.0, 0.0, -PI / 2.0);
+        ControlInput u0 = ControlInput(2.0, -PI / 18, 12.0, PI / 25.0);
 
-    public:
-        SystemModel(const SystemState& x0, const StateCov& Q, const MeasCov& R);
+        SystemParams() = default;
 
-        void Propagate(double t0, const ControlInput& u, bool add_noise = true);
+        explicit SystemParams(const SystemState& x_initial, const ControlInput& u_initial);
+    };
 
-        void CollectMeasurements();
+    class SystemModel {
+        private:
+            SystemState x_;
+            ObservationState y_;
+            StateCov Q_;
+            StateCov Svx_;
+            MeasCov R_;
+            MeasCov Svy_;
 
-        const SystemState& GetState() const;
+            std::mt19937 gen_;
 
-        const ObservationState& GetSensorMeasurement() const;
-};
+            auto SensorModel(const SystemState& x) const -> ObservationState;
+
+        public:
+            SystemModel(const SystemState& x0, const StateCov& Q, const MeasCov& R);
+
+            std::tuple<std::vector<double>, Eigen::MatrixXd, Eigen::MatrixXd> GenerateGroundTruthData(double sim_time_seconds, ControlInput& u);
+
+    };
 
 }
