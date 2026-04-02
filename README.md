@@ -323,3 +323,27 @@ or for Windows users
 ```bash
 ./build/uav_ugv_coop_localization.exe
 ```
+
+## Python Analysis & Plotting Tools
+Interactive Plotly visualizations for simulation outputs are now available to assist in post-processing
+and analyzing your simulation results via Python.
+
+### Setup (one-time)
+```bash
+python -m venv venv          # or use uv/conda
+source venv/bin/activate     # on Linux/macOS
+# or: venv\Scripts\activate   # Windows
+pip install -e .             # installs dependencies + CLI command
+```
+
+### Generating Plots
+```bash
+# Run after a simulation (replace my_run with your sub-directory name)
+plot-simulation --output-dir simulation_output/my_run
+
+# Or generate only specific plots
+plot-simulation --output-dir simulation_output/my_run --plots traj
+
+# Show help
+plot-simulation --help
+```
