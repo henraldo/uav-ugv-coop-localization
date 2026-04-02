@@ -29,12 +29,12 @@ int main() {
     EstimatorType filter_type = EstimatorType::EKF;
 
     // Define covariance traces for estimator (sample values here - update as desired)
-    double p_00 = Q(0,0)*150;
-    double p_11 = Q(1,1)*150;
-    double p_22 = Q(2,2)*5;
-    double p_33 = Q(3,3)*150;
-    double p_44 = Q(4,4)*150;
-    double p_55 = Q(5,5)*5;
+    double p_00 = Q(0,0)*950;
+    double p_11 = Q(1,1)*950;
+    double p_22 = Q(2,2)*950;
+    double p_33 = Q(3,3)*950;
+    double p_44 = Q(4,4)*950;
+    double p_55 = Q(5,5)*950;
     StateCov P_0 = Eigen::Matrix<double, 6, 1>(p_00, p_11, p_22, p_33, p_44, p_55).asDiagonal();
     StateCov Q_est = Q;
     MeasCov R_est = R;

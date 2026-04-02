@@ -111,7 +111,7 @@ namespace uav_ugv_sim {
                 d_xx(5) = WrapToPi(d_xx(5));
                 P_ += weights_covar_(i) * (d_xx * d_xx.transpose());
             }
-            P_ += params_.Q * DT;
+            P_ += params_.Q;
         }
 
         // Corrects state and covariance predictions from latest observations
@@ -139,7 +139,7 @@ namespace uav_ugv_sim {
                 d_yy(2) = WrapToPi(d_yy(2));
                 Pyy += weights_covar_(i) * (d_yy * d_yy.transpose());
             }
-            Pyy += params_.R * DT;
+            Pyy += params_.R;
 
             Eigen::MatrixXd Pxy(n_, m);
             Pxy.setZero();
