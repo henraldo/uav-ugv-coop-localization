@@ -24,7 +24,6 @@ namespace uav_ugv_sim {
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wuninitialized"
     #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-            // boost::numeric::odeint::runge_kutta_dopri5<SystemState> stepper;
             boost::numeric::odeint::integrate_const(
                 boost::numeric::odeint::runge_kutta4<SystemState>{}, dyn, xhat_, t0, t0 + DT, DT
             );
@@ -39,7 +38,7 @@ namespace uav_ugv_sim {
         void Predict(double t0, const ControlInput& u) override {
             EKF::Propagate(t0, u);
             auto F = EKF::ComputeJacobianF(xhat_, u, DT);
-            P_ = F * P_ * F.transpose() + (params_.Q * DT);
+            P_ = F * P_ * F.transpose() + (params_.Omega * params_.Q * params_.Omega.transpose());
         }
 
         // Corrects state and covariance predictions from latest observations
@@ -50,7 +49,7 @@ namespace uav_ugv_sim {
             ey_(0) = WrapToPi(ey_(0));
             ey_(2) = WrapToPi(ey_(2));
 
-            auto S = H * P_ * H.transpose() + params_.R * DT;
+            auto S = H * P_ * H.transpose() + params_.R;
             auto K = P_ * H.transpose() * S.inverse();
 
             xhat_ += K * ey_;
