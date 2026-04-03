@@ -126,8 +126,8 @@ $$\boldsymbol{y}(t) = \begin{bmatrix}
 
 ## Extended Kalman Filter Overview
 The online nonlinear trajectory for the filter is updated at each time step, as part of the prediction
-stage and the nonlinear dynamics model is propagated forward using BOOST's `odeint::runge_kutta4` (4th order) ODE solver. 
-A new state estimate 
+stage and the nonlinear dynamics model is propagated forward using BOOST's `odeint::runge_kutta4` (4th order) ODE solver.
+A new state estimate
 
  $$\boldsymbol{\hat{x}}^{-}_{k+1} = \boldsymbol{f}(\boldsymbol{\hat{x}}^{+}_k , \boldsymbol{u}_k , \boldsymbol{w}_k = 0)$$
 
@@ -152,9 +152,9 @@ $$\boldsymbol{\tilde{A}} = \begin{bmatrix}
 \end{bmatrix}_{(x_k,u_k)}$$
 
 Next, after a new set of observations are received at measurement $k+1$, the filter's correction
-stage corrects the predicted state estimate and covariance to render a final new state estimate 
+stage corrects the predicted state estimate and covariance to render a final new state estimate
 
-$$\boldsymbol{\hat{x}}^{+}_{k+1}$$ 
+$$\boldsymbol{\hat{x}}^{+}_{k+1}$$
 
 The correction stage begins by calculating an updated discrete-time observation matrix Jacobian
 
@@ -196,22 +196,22 @@ $$\boldsymbol{P}^{+}_{k+1} = (\boldsymbol{I} - \boldsymbol{K}_{k+1}\boldsymbol{\
 The UKF is a fully nonlinear filter; formulated by applying an Unscented Transform to the model dynamics,
 since it is easier to directly approximate mean and covariance between pdf's than through the nonlinear state
 transition functions. Instead of using a Taylor Series expansion to linearize the model dynamics, sigma points
-are generated from the current state pdf 
+are generated from the current state pdf
 
 $$p(\boldsymbol{x}_k \mid \boldsymbol{y}_{1:k})$$
 
-and propagated to the next time step through the nonlinear dynamics to approximate the first two moments of the pdf 
+and propagated to the next time step through the nonlinear dynamics to approximate the first two moments of the pdf
 at the future time step. Where $2n + 1$ sigma points are required to accurately sketch out
 
 $$\boldsymbol{E}[\boldsymbol{x}_k] = \boldsymbol{\mu}_x \quad and \quad \mathrm{cov}(\boldsymbol{x}_k) = \boldsymbol{P}_{xx}$$
 
-from 
+from
 
-$$\boldsymbol{x}_k \sim p(\boldsymbol{x}_k \mid \boldsymbol{y}_{1:k})$$ 
+$$\boldsymbol{x}_k \sim p(\boldsymbol{x}_k \mid \boldsymbol{y}_{1:k})$$
 
-Given that 
+Given that
 
-$$\boldsymbol{P}_{xx} = \boldsymbol{S}^T \boldsymbol{S} \quad and \quad \boldsymbol{S} = \mathrm{chol}(\boldsymbol{P}_{xx})$$ 
+$$\boldsymbol{P}_{xx} = \boldsymbol{S}^T \boldsymbol{S} \quad and \quad \boldsymbol{S} = \mathrm{chol}(\boldsymbol{P}_{xx})$$
 
 sigma points are computed as:
 
@@ -242,7 +242,7 @@ $$\boldsymbol{\chi}^i_k = \begin{cases}
 \end{cases}$$
 
 Then each of the sigma points at $t = t_k$ is propagated through the nonlinear dynamics function $\boldsymbol{f}$
-(again using the BOOST `odeint::runge_kutta4` solver) to generate predicted points 
+(again using the BOOST `odeint::runge_kutta4` solver) to generate predicted points
 
 $$\boldsymbol{\chi}^{-i}_{k+1} \quad at \quad t = t_{k+1}$$
 
@@ -256,11 +256,11 @@ where
 
 $$\omega^0_m = \frac{\lambda}{n + \lambda}, \quad \omega^0_c = \frac{\lambda}{n + \lambda} + 1 - \alpha^2 + \beta, \quad \omega^i_m = \omega^i_c = \frac{1}{2(n + \lambda)}$$
 
-The filter correction step has a form similar to the prediction step. Given 
+The filter correction step has a form similar to the prediction step. Given
 
-$$\boldsymbol{\hat{x}}^-_{k+1}, \quad \boldsymbol{P}^-_{k+1}, \quad and \quad observation \quad \boldsymbol{y}_{k+1}$$ 
+$$\boldsymbol{\hat{x}}^-_{k+1}, \quad \boldsymbol{P}^-_{k+1}, \quad and \quad observation \quad \boldsymbol{y}_{k+1}$$
 
-the correction step begins by generating another set of sigma points at measurement $k+1$ for the span of measurement 
+the correction step begins by generating another set of sigma points at measurement $k+1$ for the span of measurement
 estimates $\boldsymbol{\gamma}^i_{k+1}$ by passing the predicted state sigma points through the nonlinear sensor dynamics function $\boldsymbol{h}$.
 
 The updated measurement mean and covariance are then computed by:
@@ -346,4 +346,18 @@ plot-simulation --output-dir simulation_output/my_run --plots traj
 
 # Show help
 plot-simulation --help
+```
+
+## Quick Start with Make
+
+All common tasks are also available via a single `Makefile`:
+
+```bash
+make help                     # show all targets
+make dev-setup                # full C++ + Python dev environment (one command)
+make build                    # build C++ simulation
+make run                      # build + run simulation
+make python-plot OUTPUT_DIR=simulation_output/my_run   # generate Plotly HTML
+make clean                    # clean C++ build
+make all                      ## Build C++ + setup Python dev environment
 ```
