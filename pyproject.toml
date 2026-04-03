@@ -1,0 +1,41 @@
+[project]
+name = "uav-ugv-coop-analysis"
+version = "0.1.0"
+description = "Post-processing visualization tools for the UAV-UGV cooperative localization simulation outputs"
+readme = "README.md"
+requires-python = ">=3.12,<3.15"
+dependencies = [
+    "pandas>=3.0.2",
+    "plotly>=6.6.0",
+    "numpy>=2.4.4",
+]
+
+[dependency-groups]
+lint = [
+    "black (>=25.12.0,<26.0.0)",
+    "isort (>=7.0.0,<8.0.0)"
+]
+dev = [
+    "taskipy (>=1.14.1,<2.0.0)"
+]
+
+[project.scripts]
+plot-simulation = "analysis.cli:main"
+
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["analysis*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.isort]
+profile = "black"
+
+[tool.taskipy.tasks]
+lint-fix = "black . && isort ."

@@ -1,2 +1,11 @@
 build/
 simulation_output/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+uav_ugv_coop_analysis.egg-info/
+venv/
+.env
