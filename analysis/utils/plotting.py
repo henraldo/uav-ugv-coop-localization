@@ -34,7 +34,7 @@ def plot_trajectories(df: pd.DataFrame, output_html: str | None = None):
                 y=df["xhat_ng"],
                 mode="lines",
                 name="UGV Estimated",
-                line=dict(dash="dash", color="blue"),
+                line=dict(dash="dash", color="orange"),
             )
         )
     if all(c in df.columns for c in ["xhat_ea", "xhat_na"]):
@@ -44,7 +44,7 @@ def plot_trajectories(df: pd.DataFrame, output_html: str | None = None):
                 y=df["xhat_na"],
                 mode="lines",
                 name="UAV Estimated",
-                line=dict(dash="dash", color="red"),
+                line=dict(dash="dash", color="green"),
             )
         )
 
