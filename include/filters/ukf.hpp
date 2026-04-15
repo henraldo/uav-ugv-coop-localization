@@ -65,7 +65,7 @@ namespace uav_ugv_sim {
             const double beta,
             const double kappa
         ) : Estimator(x0, filter_params), alpha_(alpha), beta_(beta), kappa_(kappa) {
-            estimator_type_ = EstimatorType::UKF;
+            // estimator_type_ = EstimatorType::UKF;
             n_ = x0.rows();
             L_ = 2 * n_ + 1;
 
@@ -140,6 +140,7 @@ namespace uav_ugv_sim {
                 Pyy += weights_covar_(i) * (d_yy * d_yy.transpose());
             }
             Pyy += params_.R;
+            S_ = Pyy;
 
             Eigen::MatrixXd Pxy(n_, m);
             Pxy.setZero();

@@ -12,9 +12,7 @@ namespace uav_ugv_sim {
     class EKF : public Estimator {
 
     public:
-        EKF(const SystemState& x0, FilterParams& filter_params) : Estimator(x0, filter_params) {
-            estimator_type_ = EstimatorType::EKF;
-        }
+        EKF(const SystemState& x0, FilterParams& filter_params) : Estimator(x0, filter_params) {}
 
         // Propagate nonlinear system dynamics model
         void Propagate(double t0, const ControlInput& u) override {
@@ -49,8 +47,8 @@ namespace uav_ugv_sim {
             ey_(0) = WrapToPi(ey_(0));
             ey_(2) = WrapToPi(ey_(2));
 
-            auto S = H * P_ * H.transpose() + params_.R;
-            auto K = P_ * H.transpose() * S.inverse();
+            S_ = H * P_ * H.transpose() + params_.R;
+            auto K = P_ * H.transpose() * S_.inverse();
 
             xhat_ += K * ey_;
             xhat_(2) = WrapToPi(xhat_(2));

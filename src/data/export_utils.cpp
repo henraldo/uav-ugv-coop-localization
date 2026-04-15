@@ -8,6 +8,12 @@
 namespace uav_ugv_sim {
 
     void TimeHistoryCollector::Reserve(size_t max_steps) {
+        if (mode_ == CollectorMode::MCStatistics) {
+            mc_times_.reserve(max_steps);
+            mc_nees_.reserve(max_steps);
+            mc_nis_.reserve(max_steps);
+            return;
+        }
 
         time_col_ = kTimeHeader.size();
         state_col_ = kStateHeaders.size();
@@ -41,8 +47,17 @@ namespace uav_ugv_sim {
         const ObservationState& y_true,
         const SystemState& xhat,
         const ObservationState& ey,
-        const Eigen::Matrix<double, 6, 1> P_diag
+        const Eigen::Matrix<double, 6, 1> P_diag,
+        double nees,
+        double nis
     ) {
+        if (mode_ == CollectorMode::MCStatistics) {
+            mc_times_.push_back(t);
+            mc_nees_.push_back(nees);
+            mc_nis_.push_back(nis);
+            return;
+        }
+
         if (row_ >= data_.rows()) {
             data_.conservativeResize(data_.rows() * 2, Eigen::NoChange);
         }
@@ -56,13 +71,14 @@ namespace uav_ugv_sim {
         current_row.segment(time_col_ + state_col_ + meas_col_ + est_col_, err_col_) = ey.transpose();
         current_row.segment(time_col_ + state_col_ + meas_col_ + est_col_ + err_col_, covar_col_) = P_diag.transpose();
         ++row_;
+
     }
 
     void TimeHistoryCollector::Save(
         const std::string& dataset_name,
         const EstimatorType& filter_type
     ) const {
-        if (row_ == 0) return;
+        if (row_ == 0 || mode_ == CollectorMode::MCStatistics) return;
 
         // Build full path to output directory
         std::string output_dir = "simulation_output";
@@ -76,6 +92,7 @@ namespace uav_ugv_sim {
             std::cout << "Created output directory: " << output_path << std::endl;
         }
 
+        // std::string filter = filter_type.ToString() + "_";
         std::string filter;
         if (filter_type == EstimatorType::EKF) {
             filter = "ekf_";
@@ -104,6 +121,56 @@ namespace uav_ugv_sim {
         sim_csv_file.flush();
         sim_csv_file.close();
         std::cout << "Exported simulation data to " << sim_data << std::endl;
+    }
+
+    void TimeHistoryCollector::SaveMCStats(
+        const std::vector<TimeHistoryCollector>& collectors,
+        const EstimatorType& filter_type
+    ) const {
+        if (collectors.empty()) return;
+
+        size_t n_runs = collectors.size();
+        size_t n_steps = collectors[0].mc_times_.size();
+
+        std::vector<double> all_nees(n_runs * n_steps, 0.0);
+        std::vector<double> all_nis(n_runs * n_steps, 0.0);
+
+        int j = 0;
+        for (auto& collector : collectors) {
+            for (size_t k = 0; k < n_steps; k++) {
+                all_nees[j] = collector.mc_nees_[k];
+                all_nis[j] = collector.mc_nis_[k];
+                ++j;
+            }
+        }
+
+        std::string dataset_name;
+        if (filter_type == EstimatorType::EKF) {
+            dataset_name = "ekf_tmt";
+        } else {
+            dataset_name = "ukf_tmt";
+        }
+        std::string output_dir = "simulation_output";
+        std::filesystem::path base_directory = std::filesystem::current_path();
+        std::filesystem::path output_path = base_directory / output_dir / dataset_name;
+        if (!std::filesystem::exists(output_path)) {
+            if (!std::filesystem::create_directories(output_path)) {
+                std::cout << "Error: Could not create directory " << output_path << std::endl;
+                throw std::runtime_error("Failed to create directory");
+            }
+            std::cout << "Created output directory: " << output_path << std::endl;
+        }
+
+        std::filesystem::path filename = output_path.append("monte_carlo_results.csv");
+        std::ofstream csv_data(filename);
+        if (!csv_data.is_open()) throw std::runtime_error("Cannot open monte_carlo_results.csv");
+        csv_data << kNeesHeader[0] << ", " << kNisHeader[0] << std::endl;
+        for (size_t i = 0; i < all_nees.size(); i++) {
+            csv_data << all_nees[i] << ", " << all_nis[i] << std::endl;
+        }
+        csv_data.flush();
+        csv_data.close();
+        std::cout << "Exported Monte Carlo TMT data to " << filename << std::endl;
     }
 
     void TimeHistoryCollector::SaveFilterSettings(

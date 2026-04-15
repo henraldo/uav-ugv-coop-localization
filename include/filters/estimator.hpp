@@ -10,25 +10,27 @@ namespace uav_ugv_sim {
 
     constexpr std::string_view ToString(EstimatorType estimator) {
         switch (estimator) {
-            case EstimatorType::EKF: return "EKF";
-            case EstimatorType::UKF: return "UKF";
+            case EstimatorType::EKF: return "ekf";
+            case EstimatorType::UKF: return "ukf";
         }
         return "Unknown";
     }
 
     struct FilterParams {
-        StateCov P0 = Eigen::Matrix<double, 6, 1>(5.0, 5.0, 20.0, 5.0, 5.0, 20.0).asDiagonal();
+        StateCov P0 = StateCov::Identity();
         StateCov Q = Q_TRUE;
         MeasCov R = R_TRUE;
         StateCov Omega = StateCov::Identity() * DT;
+        EstimatorType filter_type = EstimatorType::EKF;
 
         FilterParams() = default;
 
         explicit FilterParams(
             const StateCov& p_initial,
             const StateCov& q,
-            const MeasCov& r
-        ) noexcept : P0(p_initial), Q(q), R(r) {}
+            const MeasCov& r,
+            const EstimatorType& filt_type
+        ) noexcept : P0(p_initial), Q(q), R(r), filter_type(filt_type) {}
 
         void ScaleDefaultQR(double q_scale, double r_scale) {
             Q *= q_scale;
@@ -43,7 +45,7 @@ namespace uav_ugv_sim {
             SystemState xhat_;
             ObservationState ey_;
             StateCov P_;
-            EstimatorType estimator_type_;
+            MeasCov S_;
             FilterParams params_;
 
             auto ComputeJacobianF(const SystemState& xhat, const ControlInput& u, double dt) const -> StateTransition;
@@ -68,6 +70,10 @@ namespace uav_ugv_sim {
             const ObservationState& GetFilterResiduals() const;
 
             const SystemState GetCovarDiagonal() const;
+
+            const StateCov& GetCovariance() const;
+
+            const MeasCov& GetInnovCovariance() const;
     };
 
 }

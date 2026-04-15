@@ -16,10 +16,18 @@ inline const std::vector<std::string> kMeasurementHeaders = {"y_0", "y_1", "y_2"
 inline const std::vector<std::string> kEstHeaders = {"xhat_eg", "xhat_ng", "xhat_wg", "xhat_ea", "xhat_na","xhat_wa"};
 inline const std::vector<std::string> kErrorHeaders = {"ey_0", "ey_1", "ey_2", "ey_3", "ey_4"};
 inline const std::vector<std::string> kCovHeaders = {"p_00", "p_11", "p_22", "p_33", "p_44", "p_55"};
+inline const std::vector<std::string> kMonteCarloRunIdx = {"run_idx"};
+inline const std::vector<std::string> kNeesHeader = {"nees"};
+inline const std::vector<std::string> kNisHeader = {"nis"};
+
+
+enum class CollectorMode { Full, MCStatistics };
 
 
 class TimeHistoryCollector {
     private:
+        CollectorMode mode_ = CollectorMode::Full;
+
         SimHistory data_;
         SimHistory filter_settings_;
         std::vector<std::string> headers_;
@@ -28,7 +36,15 @@ class TimeHistoryCollector {
         size_t total_cols_{0};
         int row_{0};
 
+        std::vector<double> mc_times_;
+        std::vector<double> mc_nees_;
+        std::vector<double> mc_nis_;
+
     public:
+        void SetMode(CollectorMode mode) { mode_ = mode; }
+
+        CollectorMode GetMode() { return mode_; }
+
         void Reserve(size_t max_steps);
 
         void Record(
@@ -37,11 +53,18 @@ class TimeHistoryCollector {
             const ObservationState& y_true,
             const SystemState& xhat,
             const ObservationState& ey,
-            const Eigen::Matrix<double, 6, 1> P_diag
+            const Eigen::Matrix<double, 6, 1> P_diag,
+            double nees,
+            double nis
         );
 
         void Save(
             const std::string& dataset_name,
+            const EstimatorType& filter_type
+        ) const;
+
+        void SaveMCStats(
+            const std::vector<TimeHistoryCollector>& collectors,
             const EstimatorType& filter_type
         ) const;
 

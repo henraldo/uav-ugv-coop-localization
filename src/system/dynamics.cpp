@@ -83,8 +83,8 @@ namespace uav_ugv_sim {
                 meas_noise(k, 0) = norm_dist(gen_);
             }
 
-            x_truth.col(i) = states[i] + (Svx_.transpose() * proc_noise);
-            y_truth.col(i) = SensorModel(states[i]) + (Svy_.transpose() * meas_noise);
+            x_truth.col(i) = states[i] + (Svx_ * proc_noise);
+            y_truth.col(i) = SensorModel(states[i]) + (Svy_ * meas_noise);
 
         }
 

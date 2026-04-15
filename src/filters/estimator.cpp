@@ -109,5 +109,7 @@ namespace uav_ugv_sim
     const SystemState& Estimator::GetEstimatedState() const { return xhat_; }
     const ObservationState& Estimator::GetFilterResiduals() const { return ey_; }
     const Eigen::Matrix<double, 6, 1> Estimator::GetCovarDiagonal() const { return P_.diagonal(); }
+    const StateCov& Estimator::GetCovariance() const { return P_; }
+    const MeasCov& Estimator::GetInnovCovariance() const { return S_; }
 
 }
